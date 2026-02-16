@@ -1,0 +1,5 @@
+main: com.simc.SiMCUniverse
+version: 1.0.0-SNAPSHOT
+name: SiMCUniverse
+author: YunHydrogen
+api-version: 1.20
