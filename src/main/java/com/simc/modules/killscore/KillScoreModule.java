@@ -1,6 +1,8 @@
 package com.simc.modules.killscore;
 
 import com.simc.SiMCUniverse;
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.configuration.ConfigurationSection;
@@ -29,6 +31,7 @@ public class KillScoreModule {
 
     private String killScoreName;
     private boolean scoreboardEnabled;
+    private boolean actionBarNotifyOnGain;
     private boolean deathMultiplierEnabled;
     private double deathMultiplierValue;
     private String deathMultiplierRounding;
@@ -95,6 +98,10 @@ public class KillScoreModule {
             return;
         }
         addScore(killer.getUniqueId(), delta);
+
+        if (actionBarNotifyOnGain) {
+            killer.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("+" + delta + " " + killScoreName));
+        }
     }
 
     public void handlePlayerDeath(Player player) {
@@ -149,6 +156,7 @@ public class KillScoreModule {
 
         killScoreName = config.getString("killscore-name", "击杀分");
         scoreboardEnabled = config.getBoolean("scoreboard.enabled", true);
+        actionBarNotifyOnGain = config.getBoolean("actionbar.notify-on-gain", true);
 
         deathMultiplierEnabled = config.getBoolean("death-multiplier.enabled", false);
         deathMultiplierValue = clamp(config.getDouble("death-multiplier.value", 1.0), 0.0, 1.0);

@@ -13,10 +13,16 @@ commands:
   si-killscore:
     description: KillScore module command.
     usage: /<command> help
+  si-livescore:
+    description: LiveScore module command.
+    usage: /<command> help
 permissions:
   simc.admin:
     description: Allows managing SiMCUniverse.
     default: op
   simc.killscore.sudo:
     description: Allows using si-killscore sudo commands.
+    default: op
+  simc.livescore.sudo:
+    description: Allows using si-livescore sudo commands.
     default: op

@@ -1,8 +1,11 @@
 com\simc\utils\Utils.class
-com\simc\modules\killscore\KillScoreCommand.class
-com\simc\modules\killscore\KillScoreListener.class
 com\simc\SiMCUniverse.class
-com\simc\managers\PluginManager.class
 com\simc\modules\killscore\KillScoreModule.class
 com\simc\listeners\PlayerListener.class
+com\simc\modules\livescore\LiveScoreListener.class
+com\simc\modules\killscore\KillScoreCommand.class
+com\simc\modules\killscore\KillScoreListener.class
+com\simc\managers\PluginManager.class
+com\simc\modules\livescore\LiveScoreModule.class
+com\simc\modules\livescore\LiveScoreCommand.class
 com\simc\commands\SimcCommand.class

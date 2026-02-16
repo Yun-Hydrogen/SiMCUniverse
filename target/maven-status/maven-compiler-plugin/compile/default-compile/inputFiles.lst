@@ -4,5 +4,8 @@ e:\project-code\simcuniverse\SiMCUniverse\src\main\java\com\simc\managers\Plugin
 e:\project-code\simcuniverse\SiMCUniverse\src\main\java\com\simc\modules\killscore\KillScoreCommand.java
 e:\project-code\simcuniverse\SiMCUniverse\src\main\java\com\simc\modules\killscore\KillScoreListener.java
 e:\project-code\simcuniverse\SiMCUniverse\src\main\java\com\simc\modules\killscore\KillScoreModule.java
+e:\project-code\simcuniverse\SiMCUniverse\src\main\java\com\simc\modules\livescore\LiveScoreCommand.java
+e:\project-code\simcuniverse\SiMCUniverse\src\main\java\com\simc\modules\livescore\LiveScoreListener.java
+e:\project-code\simcuniverse\SiMCUniverse\src\main\java\com\simc\modules\livescore\LiveScoreModule.java
 e:\project-code\simcuniverse\SiMCUniverse\src\main\java\com\simc\SiMCUniverse.java
 e:\project-code\simcuniverse\SiMCUniverse\src\main\java\com\simc\utils\Utils.java

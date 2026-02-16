@@ -1,0 +1,24 @@
+# SiMCUniverse - LiveScore 模块配置
+
+# 是否在 Tab 栏显示所有玩家的生存分
+tab-display:
+  enabled: true
+
+# 每多少秒给在线玩家加多少分（正整数）
+gain:
+  interval-seconds: 60
+  amount: 1
+
+# 玩家死亡后是否按倍数折算生存分
+death-multiplier:
+  enabled: false
+  value: 0.8
+  # 可选: ceil | floor | round
+  rounding: round
+
+# 运行态配置（模块自动维护）
+runtime:
+  paused: false
+
+# 玩家分数数据（模块自动维护）
+scores: {}
