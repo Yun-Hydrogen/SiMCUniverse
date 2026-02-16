@@ -1,0 +1,4 @@
+# SiMCUniverse 默认配置
+plugin:
+  language: zh_cn
+  debug: false
