@@ -1,25 +1,36 @@
 # 签到任务示例（符合规范的 yml 会被动态加载）
+
+#签到id，必须唯一，且只能包含小写字母、数字和下划线
 id: daily_login
 
+# 签到任务标题，支持颜色代码（&）和 HEX 颜色（#66CCFF）
 title: "&#66CCFF每日签到"
+# 签到任务图标物品，使用名字空间格式（如 minecraft:emerald）
 icon: "minecraft:emerald"
-
+# 签到任务介绍，支持多行和颜色代码
 lore:
   - "&7基础连续签到任务"
   - "&7每天重置后可签到一次"
 
+# 签到天数，正整数，表示需要签到多少天完成任务
 days: 7
+# 重置时间，格式为 HH:mm:ss，表示每天几点重置签到状态
 reset-time: "04:00:00"
 
+# 解锁条件，type 可选 none（无条件解锁）、after_task（完成指定任务后解锁）、always_locked（始终锁定）
 unlock:
   # none | after_task | always_locked
   type: none
   task-id: ""
 
+# 签到类型
 repeat:
+  # 是否循环签到，true 表示完成后重置继续签到，false 表示完成后不再可签到
   loop: true
+  # 是否要求连续签到，true 表示必须连续签到才能完成任务，false 表示不要求连续签到
   continuous: true
 
+# 签到奖励，按照签到天数对应命令列表
 rewards:
   1:
     - "give %player% minecraft:apple 2"

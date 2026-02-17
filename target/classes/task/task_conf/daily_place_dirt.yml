@@ -1,0 +1,17 @@
+# 示例：日常任务 - 放置方块
+category: daily
+name: "&a绿化小能手"
+description:
+  - "&7放置指定数量的泥土方块"
+  - "&7实时统计，完成自动确认"
+id: daily_place_dirt
+icon: "minecraft:dirt"
+type: PLACE
+
+# required 为键值结构：<名字空间(可附带NBT)>: <数量>
+required:
+  "minecraft:dirt": 32
+
+rewards:
+  - "tellraw %player% {\"text\":\"任务完成：绿化小能手\",\"color\":\"green\"}"
+  - "give %player% minecraft:oak_sapling 4"

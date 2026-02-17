@@ -1,22 +1,30 @@
+# ================================
 # SiMCUniverse - Random 模块主配置
+# ================================
 
-# 货币来源: killscore 或 livescore
+# 货币来源：killscore 或 livescore
 currency-source: killscore
 
+# 抽奖消耗
 draw-cost:
+  # 单抽消耗
   single: 10
+  # 十连抽消耗
   ten: 90
 
+# 十连抽是否保底至少获得一件gold等级以上的物品（九蓝一金）
 draw:
   ten-guarantee-gold: true
 
+# 保底点数
 pity:
   threshold: 100
 
+# 抽奖GUI音效
 custom-music:
   enabled: false
-  # 建议使用自定义命名空间，避免原版声音键被客户端其他资源包影响
-  sound-id: "simcuniverse:random_open"
+  # 默认为minecraft末影龙死亡音效，建议使用自定义命名空间，避免原版声音键被客户端其他资源包影响
+  sound-id: minecraft:entity.ender_dragon.death
   # 为避免服务器自动下发时出现原版/自定义音效混播，建议开启
   require-pack-ready: true
   volume: 1.0

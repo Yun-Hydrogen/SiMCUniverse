@@ -1,0 +1,37 @@
+# ================================
+# 任务配置示例：日常破坏方块任务
+# ================================
+# category：任务类别
+#   - daily（日常）
+#   - weekly（每周）
+#   - achievement（成就）
+category: daily
+
+# name：任务名字（支持 & 颜色与 HEX 颜色，如 #66CCFF）
+name: "#66CCFF采石达人"
+
+# description：任务介绍（可多行，支持颜色）
+description:
+  - "&7破坏指定数量方块"
+  - "&7完成后自动发放奖励"
+
+# id：内部显示名称（仅英文、小写数字、下划线、连接线）
+id: daily_break_stone
+
+# icon：图标物品（建议使用名字空间）
+icon: "minecraft:stone"
+
+# type：任务类型
+# BREAK / PLACE / INTERACT / KILL / GAIN_XP / POSITION / PICKUP / CRAFT
+type: BREAK
+
+# required：需求
+# 对于 BREAK/PLACE/INTERACT/KILL/PICKUP/CRAFT：
+# 使用键值对，键为目标名字空间（可附加 NBT 字符串），值为数量
+required:
+  "minecraft:stone": 64
+
+# rewards：奖励命令（无需 /），支持 %player% 占位符
+rewards:
+  - "tellraw %player% {\"text\":\"任务完成：采石达人\",\"color\":\"gold\"}"
+  - "give %player% minecraft:emerald 3"

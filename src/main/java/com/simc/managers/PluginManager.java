@@ -7,6 +7,7 @@ import com.simc.modules.killscore.KillScoreModule;
 import com.simc.modules.livescore.LiveScoreModule;
 import com.simc.modules.random.RandomModule;
 import com.simc.modules.shop.ShopModule;
+import com.simc.modules.task.TaskModule;
 
 import java.util.LinkedHashMap;
 import java.util.Locale;
@@ -19,6 +20,7 @@ public class PluginManager {
     private ShopModule shopModule;
     private RandomModule randomModule;
     private CheckinModule checkinModule;
+    private TaskModule taskModule;
 
     public PluginManager(SiMCUniverse plugin) {
         this.plugin = plugin;
@@ -46,6 +48,9 @@ public class PluginManager {
         if (checkinModule != null) {
             checkinModule.shutdown();
         }
+        if (taskModule != null) {
+            taskModule.shutdown();
+        }
         plugin.getLogger().info("PluginManager shutdown completed.");
     }
 
@@ -68,6 +73,9 @@ public class PluginManager {
 
         checkinModule = new CheckinModule(plugin);
         checkinModule.initialize();
+
+        taskModule = new TaskModule(plugin);
+        taskModule.initialize();
     }
 
     public KillScoreModule getKillScoreModule() {
@@ -90,6 +98,10 @@ public class PluginManager {
         return checkinModule;
     }
 
+    public TaskModule getTaskModule() {
+        return taskModule;
+    }
+
     public Map<String, Boolean> listModuleStatus() {
         Map<String, Boolean> result = new LinkedHashMap<>();
         result.put("killscore", killScoreModule != null && killScoreModule.isEnabled());
@@ -97,6 +109,7 @@ public class PluginManager {
         result.put("shop", shopModule != null && shopModule.isEnabled());
         result.put("random", randomModule != null && randomModule.isEnabled());
         result.put("checkin", checkinModule != null && checkinModule.isEnabled());
+        result.put("task", taskModule != null && taskModule.isEnabled());
         return result;
     }
 
@@ -120,6 +133,10 @@ public class PluginManager {
         }
         if ("checkin".equals(key) && checkinModule != null) {
             checkinModule.enable();
+            return true;
+        }
+        if ("task".equals(key) && taskModule != null) {
+            taskModule.enable();
             return true;
         }
         return false;
@@ -147,6 +164,10 @@ public class PluginManager {
             checkinModule.disable();
             return true;
         }
+        if ("task".equals(key) && taskModule != null) {
+            taskModule.disable();
+            return true;
+        }
         return false;
     }
 
@@ -172,6 +193,10 @@ public class PluginManager {
             checkinModule.reload();
             return true;
         }
+        if ("task".equals(key) && taskModule != null) {
+            taskModule.reload();
+            return true;
+        }
         return false;
     }
 
@@ -191,6 +216,9 @@ public class PluginManager {
         }
         if (checkinModule != null) {
             checkinModule.reload();
+        }
+        if (taskModule != null) {
+            taskModule.reload();
         }
     }
 

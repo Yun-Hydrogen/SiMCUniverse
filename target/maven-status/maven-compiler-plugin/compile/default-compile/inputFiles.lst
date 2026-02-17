@@ -16,5 +16,8 @@ e:\project-code\simcuniverse\SiMCUniverse\src\main\java\com\simc\modules\random\
 e:\project-code\simcuniverse\SiMCUniverse\src\main\java\com\simc\modules\shop\ShopCommand.java
 e:\project-code\simcuniverse\SiMCUniverse\src\main\java\com\simc\modules\shop\ShopListener.java
 e:\project-code\simcuniverse\SiMCUniverse\src\main\java\com\simc\modules\shop\ShopModule.java
+e:\project-code\simcuniverse\SiMCUniverse\src\main\java\com\simc\modules\task\TaskCommand.java
+e:\project-code\simcuniverse\SiMCUniverse\src\main\java\com\simc\modules\task\TaskListener.java
+e:\project-code\simcuniverse\SiMCUniverse\src\main\java\com\simc\modules\task\TaskModule.java
 e:\project-code\simcuniverse\SiMCUniverse\src\main\java\com\simc\SiMCUniverse.java
 e:\project-code\simcuniverse\SiMCUniverse\src\main\java\com\simc\utils\Utils.java

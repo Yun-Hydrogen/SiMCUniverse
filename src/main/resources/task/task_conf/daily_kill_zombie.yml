@@ -1,0 +1,16 @@
+# 示例：日常任务 - 击杀实体
+category: daily
+name: "&2清剿僵尸"
+description:
+  - "&7击杀指定数量僵尸"
+  - "&7实时统计，完成自动确认"
+id: daily_kill_zombie
+icon: "minecraft:iron_sword"
+type: KILL
+
+required:
+  "minecraft:zombie": 12
+
+rewards:
+  - "tellraw %player% {\"text\":\"任务完成：清剿僵尸\",\"color\":\"dark_green\"}"
+  - "give %player% minecraft:gold_ingot 6"

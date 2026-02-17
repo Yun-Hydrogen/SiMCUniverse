@@ -1,0 +1,16 @@
+# 示例：每周任务 - 合成物品
+category: weekly
+name: "&e面包工坊"
+description:
+  - "&7一周内合成指定数量面包"
+  - "&7实时统计，完成自动确认"
+id: weekly_craft_bread
+icon: "minecraft:bread"
+type: CRAFT
+
+required:
+  "minecraft:bread": 24
+
+rewards:
+  - "tellraw %player% {\"text\":\"任务完成：面包工坊\",\"color\":\"yellow\"}"
+  - "give %player% minecraft:emerald 12"

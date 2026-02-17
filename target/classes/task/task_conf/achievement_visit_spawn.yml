@@ -1,0 +1,16 @@
+# 示例：成就任务 - 到达指定位置（需在GUI点击确认）
+category: achievement
+name: "&d初次远行"
+description:
+  - "&7到达主城地标区域"
+  - "&7到达后在任务GUI点击本任务确认完成"
+id: achievement_visit_spawn
+icon: "minecraft:compass"
+type: POSITION
+
+# POSITION 的 required 可写为坐标+半径字符串：(x,y,z,radius)
+required: "(0,64,0,20)"
+
+rewards:
+  - "tellraw %player% {\"text\":\"任务完成：初次远行\",\"color\":\"light_purple\"}"
+  - "give %player% minecraft:ender_pearl 4"

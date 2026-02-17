@@ -26,6 +26,9 @@ commands:
   si-checkin:
     description: Checkin module command.
     usage: /<command>
+  si-task:
+    description: Task module command.
+    usage: /<command>
 permissions:
   simc.admin:
     description: Allows managing SiMCUniverse.
@@ -44,4 +47,7 @@ permissions:
     default: op
   simc.checkin.sudo:
     description: Allows using si-checkin sudo commands.
+    default: op
+  simc.task.sudo:
+    description: Allows using si-task sudo commands.
     default: op

@@ -1,0 +1,16 @@
+# 示例：日常任务 - 拾取物品
+category: daily
+name: "&6木材搬运工"
+description:
+  - "&7拾取指定数量原木"
+  - "&7实时统计，完成自动确认"
+id: daily_pickup_log
+icon: "minecraft:oak_log"
+type: PICKUP
+
+required:
+  "minecraft:oak_log": 48
+
+rewards:
+  - "tellraw %player% {\"text\":\"任务完成：木材搬运工\",\"color\":\"gold\"}"
+  - "give %player% minecraft:bread 6"

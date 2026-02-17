@@ -1,0 +1,26 @@
+# ================================
+# SiMCUniverse - Task 模块主配置
+# ================================
+# 说明：
+# 1) 本文件用于设置任务模块提示消息与重置时间。
+# 2) 任务定义文件请放在 task/task_conf/ 目录中，符合格式会自动加载。
+
+messages:
+  module-disabled: "&cTask 模块已禁用。"
+  reload-success: "&aTask 配置已重载。"
+  reset-success: "&a已重置任务 %task_id% 的全服进度。"
+  task-complete: "&a任务完成：%task_title%"
+  already-complete: "&e该任务已完成。"
+  auto-task-tip: "&7该任务为自动统计，无需手动确认。"
+  position-reached: "&a你已到达目标区域，点击任务即可确认完成。"
+  position-not-reached: "&c你还未到达任务目标区域。"
+  position-confirmed: "&a已确认位置任务完成。"
+
+# 日常任务重置时间（格式 HH:MM:SS）
+# 例：04:00:00 表示每天凌晨 4 点重置 daily 任务。
+daily-reset-time: "04:00:00"
+
+# 每周任务重置时间（格式 星期:HH:MM:SS）
+# 星期支持：MONDAY/TUESDAY/WEDNESDAY/THURSDAY/FRIDAY/SATURDAY/SUNDAY
+# 例：MONDAY:04:00:00 表示每周一凌晨 4 点重置 weekly 任务。
+weekly-reset-time: "MONDAY:04:00:00"

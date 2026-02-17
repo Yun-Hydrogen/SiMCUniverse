@@ -1,4 +1,9 @@
+# Gold 等级 配置文件
+
+# Gold等级物品概率，请确保所有等级的概率之和为1
 chance: 0.18
+
+# Gold等级物品列表，格式为 "物品ID": 数量
 items:
   "minecraft:diamond": 2
   "minecraft:gold_ingot": 16

@@ -1,0 +1,16 @@
+# 示例：日常任务 - 交互方块
+category: daily
+name: "#66CCFF开箱达人"
+description:
+  - "&7与箱子交互指定次数"
+  - "&7实时统计，完成自动确认"
+id: daily_interact_chest
+icon: "minecraft:chest"
+type: INTERACT
+
+required:
+  "minecraft:chest": 20
+
+rewards:
+  - "tellraw %player% {\"text\":\"任务完成：开箱达人\",\"color\":\"aqua\"}"
+  - "give %player% minecraft:iron_ingot 8"

@@ -1,24 +1,27 @@
-# SiMCUniverse - KillScore 模块配置
-# killscore 外显名称
+# ================================
+# SiMCUniverse - KillScore 模块主配置
+# ================================
+
+# KillScore 外显名称（用于界面展示）
 killscore-name: "击杀分"
 
-# 是否显示 killscore 排行榜（计分板侧边栏）
+# 是否显示 KillScore 排行榜（计分板侧边栏）
 scoreboard:
   enabled: true
 
-# 是否在击杀获得分数时，在 ActionBar 提示加分
+# 是否在击杀获得分数时，通过 ActionBar 提示加分
 actionbar:
   notify-on-gain: true
 
 # 玩家击杀下列生物时加分（名称空间ID -> 分值，必须正整数）
 kills:
-  minecraft:zombie: 1
-  minecraft:skeleton: 2
-  minecraft:creeper: 3
+  minecraft:zombie: 10
+  minecraft:skeleton: 10
+  minecraft:creeper: 10
 
-# 玩家每次死亡时，分数按倍数折算
+# 玩家每次死亡时，分数按倍率折算
 death-multiplier:
   enabled: false
   value: 0.8
-  # 可选: ceil(向上取整) | floor(向下取整) | round(四舍五入)
+  # 可选：ceil（向上取整）| floor（向下取整）| round（四舍五入）
   rounding: round

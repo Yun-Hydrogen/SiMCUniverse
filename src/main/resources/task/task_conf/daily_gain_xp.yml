@@ -1,0 +1,16 @@
+# 示例：日常任务 - 获得经验
+category: daily
+name: "&b经验收集者"
+description:
+  - "&7获得指定经验值"
+  - "&7实时统计，完成自动确认"
+id: daily_gain_xp
+icon: "minecraft:experience_bottle"
+type: GAIN_XP
+
+# GAIN_XP 的 required 为数值
+required: 120
+
+rewards:
+  - "tellraw %player% {\"text\":\"任务完成：经验收集者\",\"color\":\"blue\"}"
+  - "give %player% minecraft:lapis_lazuli 16"

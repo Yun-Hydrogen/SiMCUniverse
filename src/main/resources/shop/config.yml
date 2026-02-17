@@ -1,9 +1,13 @@
+# ================================
 # SiMCUniverse - Shop 模块主配置
+# ================================
+# 说明：
+# 商品页文件请放在 shop/shop_page/ 目录中，符合格式会自动加载。
 
 # 是否注册 /shop 别名（通过监听重定向到 /si-shop）
 register-shop-alias: false
 
-# 经济货币来源: killscore 或 livescore
+# 经济货币来源：killscore 或 livescore
 currency-source: killscore
 
 messages:

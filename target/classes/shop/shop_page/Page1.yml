@@ -1,14 +1,21 @@
-# 商店第1页，1~27 对应 GUI 前三行
+# 商店第1页，最多27个商品。
 title: "商店"
 
+#商品1
 1:
+  # 商品名称，支持颜色代码和HEX颜色代码
   name: "&a木材补给"
+  # 商品描述，支持颜色代码和HEX颜色代码，支持多行显示
   lore:
     - "&7包含基础木材"
     - "&#66CCFF适合新手开荒"
+  # 商品图标，使用名字空间格式（如 minecraft:oak_log）
   icon: "minecraft:oak_log"
+  # 商品图标数量
   icon-amount: 16
+  # 兑换消耗，整数
   cost: 10
+  # 兑换类型，item表示物品交换，command表示执行命令
   exchange-type: item
   items:
     "minecraft:oak_log": 32

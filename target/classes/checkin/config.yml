@@ -1,4 +1,9 @@
+# ================================
 # SiMCUniverse - Checkin 模块主配置
+# ================================
+# 说明：
+# 签到任务定义文件请放在 checkin/checkin_conf/ 目录中，符合格式会自动加载。
+
 messages:
   module-disabled: "&cCheckin 模块已禁用。"
   task-locked: "&c该签到任务尚未解锁。"
