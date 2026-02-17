@@ -1,6 +1,9 @@
 e:\project-code\simcuniverse\SiMCUniverse\src\main\java\com\simc\commands\SimcCommand.java
 e:\project-code\simcuniverse\SiMCUniverse\src\main\java\com\simc\listeners\PlayerListener.java
 e:\project-code\simcuniverse\SiMCUniverse\src\main\java\com\simc\managers\PluginManager.java
+e:\project-code\simcuniverse\SiMCUniverse\src\main\java\com\simc\modules\checkin\CheckinCommand.java
+e:\project-code\simcuniverse\SiMCUniverse\src\main\java\com\simc\modules\checkin\CheckinListener.java
+e:\project-code\simcuniverse\SiMCUniverse\src\main\java\com\simc\modules\checkin\CheckinModule.java
 e:\project-code\simcuniverse\SiMCUniverse\src\main\java\com\simc\modules\killscore\KillScoreCommand.java
 e:\project-code\simcuniverse\SiMCUniverse\src\main\java\com\simc\modules\killscore\KillScoreListener.java
 e:\project-code\simcuniverse\SiMCUniverse\src\main\java\com\simc\modules\killscore\KillScoreModule.java

@@ -1,0 +1,38 @@
+# 签到任务示例（符合规范的 yml 会被动态加载）
+id: daily_login
+
+title: "&#66CCFF每日签到"
+icon: "minecraft:emerald"
+
+lore:
+  - "&7基础连续签到任务"
+  - "&7每天重置后可签到一次"
+
+days: 7
+reset-time: "04:00:00"
+
+unlock:
+  # none | after_task | always_locked
+  type: none
+  task-id: ""
+
+repeat:
+  loop: true
+  continuous: true
+
+rewards:
+  1:
+    - "give %player% minecraft:apple 2"
+  2:
+    - "give %player% minecraft:bread 3"
+  3:
+    - "give %player% minecraft:iron_ingot 2"
+  4:
+    - "give %player% minecraft:coal 8"
+  5:
+    - "give %player% minecraft:gold_ingot 2"
+  6:
+    - "give %player% minecraft:experience_bottle 4"
+  7:
+    - "tellraw %player% {\"text\":\"连续签到 7 天完成！\",\"color\":\"aqua\"}"
+    - "give %player% minecraft:emerald 3"

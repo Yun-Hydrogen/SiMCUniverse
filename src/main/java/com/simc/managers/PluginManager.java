@@ -2,6 +2,7 @@ package com.simc.managers;
 
 import com.simc.SiMCUniverse;
 import com.simc.listeners.PlayerListener;
+import com.simc.modules.checkin.CheckinModule;
 import com.simc.modules.killscore.KillScoreModule;
 import com.simc.modules.livescore.LiveScoreModule;
 import com.simc.modules.random.RandomModule;
@@ -17,6 +18,7 @@ public class PluginManager {
     private LiveScoreModule liveScoreModule;
     private ShopModule shopModule;
     private RandomModule randomModule;
+    private CheckinModule checkinModule;
 
     public PluginManager(SiMCUniverse plugin) {
         this.plugin = plugin;
@@ -41,6 +43,9 @@ public class PluginManager {
         if (randomModule != null) {
             randomModule.shutdown();
         }
+        if (checkinModule != null) {
+            checkinModule.shutdown();
+        }
         plugin.getLogger().info("PluginManager shutdown completed.");
     }
 
@@ -60,6 +65,9 @@ public class PluginManager {
 
         randomModule = new RandomModule(plugin);
         randomModule.initialize();
+
+        checkinModule = new CheckinModule(plugin);
+        checkinModule.initialize();
     }
 
     public KillScoreModule getKillScoreModule() {
@@ -78,12 +86,17 @@ public class PluginManager {
         return randomModule;
     }
 
+    public CheckinModule getCheckinModule() {
+        return checkinModule;
+    }
+
     public Map<String, Boolean> listModuleStatus() {
         Map<String, Boolean> result = new LinkedHashMap<>();
         result.put("killscore", killScoreModule != null && killScoreModule.isEnabled());
         result.put("livescore", liveScoreModule != null && liveScoreModule.isEnabled());
         result.put("shop", shopModule != null && shopModule.isEnabled());
         result.put("random", randomModule != null && randomModule.isEnabled());
+        result.put("checkin", checkinModule != null && checkinModule.isEnabled());
         return result;
     }
 
@@ -103,6 +116,10 @@ public class PluginManager {
         }
         if ("random".equals(key) && randomModule != null) {
             randomModule.enable();
+            return true;
+        }
+        if ("checkin".equals(key) && checkinModule != null) {
+            checkinModule.enable();
             return true;
         }
         return false;
@@ -126,6 +143,10 @@ public class PluginManager {
             randomModule.disable();
             return true;
         }
+        if ("checkin".equals(key) && checkinModule != null) {
+            checkinModule.disable();
+            return true;
+        }
         return false;
     }
 
@@ -147,6 +168,10 @@ public class PluginManager {
             randomModule.reload();
             return true;
         }
+        if ("checkin".equals(key) && checkinModule != null) {
+            checkinModule.reload();
+            return true;
+        }
         return false;
     }
 
@@ -163,6 +188,9 @@ public class PluginManager {
         }
         if (randomModule != null) {
             randomModule.reload();
+        }
+        if (checkinModule != null) {
+            checkinModule.reload();
         }
     }
 

@@ -1,0 +1,12 @@
+# SiMCUniverse - Checkin 模块主配置
+messages:
+  module-disabled: "&cCheckin 模块已禁用。"
+  task-locked: "&c该签到任务尚未解锁。"
+  already-checkin: "&e今天已经签过到了。"
+  checkin-success: "&a签到成功：%task_title% &7| 进度 %progress%/%total%"
+  task-completed: "&e该签到任务已完成。"
+  reload-success: "&aCheckin 配置已重载。"
+  reset-success: "&a已重置任务 %task_id% 的全服进度。"
+  set-success: "&a已设置玩家 %player% 在任务 %task_id% 的进度为 %progress%。"
+  lock-success: "&e已始终锁定任务 %task_id%。"
+  unlock-success: "&a已始终解锁任务 %task_id%。"

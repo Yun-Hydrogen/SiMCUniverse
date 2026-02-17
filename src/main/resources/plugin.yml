@@ -23,6 +23,9 @@ commands:
   si-random:
     description: Random module command.
     usage: /<command>
+  si-checkin:
+    description: Checkin module command.
+    usage: /<command>
 permissions:
   simc.admin:
     description: Allows managing SiMCUniverse.
@@ -38,4 +41,7 @@ permissions:
     default: op
   simc.random.sudo:
     description: Allows using si-random sudo commands.
+    default: op
+  simc.checkin.sudo:
+    description: Allows using si-checkin sudo commands.
     default: op
