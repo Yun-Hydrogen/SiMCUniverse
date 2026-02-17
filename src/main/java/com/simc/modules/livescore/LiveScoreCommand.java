@@ -28,6 +28,11 @@ public class LiveScoreCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
+        if (!module.isEnabled()) {
+            sender.sendMessage("§cLiveScore 模块当前已禁用。");
+            return true;
+        }
+
         if (equalsIgnoreCase(args[0], "show")) {
             if (sender instanceof Player) {
                 Player player = (Player) sender;
@@ -83,7 +88,7 @@ public class LiveScoreCommand implements CommandExecutor, TabCompleter {
                 return true;
             case "reload":
                 module.reload();
-                sender.sendMessage("§alivescore.yml 已重载。");
+                sender.sendMessage("§alivescore/config.yml 已重载。");
                 return true;
             default:
                 sender.sendMessage("§c未知 sudo 子命令。可用: add, set, reset, pause, start, reload");
@@ -137,7 +142,7 @@ public class LiveScoreCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage("§f/si-livescore sudo reset §7- 重置所有玩家生存分");
         sender.sendMessage("§f/si-livescore sudo pause §7- 暂停生存分计算");
         sender.sendMessage("§f/si-livescore sudo start §7- 继续生存分计算");
-        sender.sendMessage("§f/si-livescore sudo reload §7- 重载 livescore.yml");
+        sender.sendMessage("§f/si-livescore sudo reload §7- 重载 livescore/config.yml");
     }
 
     private void sendRanking(CommandSender sender) {

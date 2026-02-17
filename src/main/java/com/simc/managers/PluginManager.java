@@ -5,6 +5,10 @@ import com.simc.listeners.PlayerListener;
 import com.simc.modules.killscore.KillScoreModule;
 import com.simc.modules.livescore.LiveScoreModule;
 
+import java.util.LinkedHashMap;
+import java.util.Locale;
+import java.util.Map;
+
 public class PluginManager {
     private final SiMCUniverse plugin;
     private KillScoreModule killScoreModule;
@@ -48,5 +52,65 @@ public class PluginManager {
 
     public LiveScoreModule getLiveScoreModule() {
         return liveScoreModule;
+    }
+
+    public Map<String, Boolean> listModuleStatus() {
+        Map<String, Boolean> result = new LinkedHashMap<>();
+        result.put("killscore", killScoreModule != null && killScoreModule.isEnabled());
+        result.put("livescore", liveScoreModule != null && liveScoreModule.isEnabled());
+        return result;
+    }
+
+    public boolean enableModule(String moduleName) {
+        String key = normalize(moduleName);
+        if ("killscore".equals(key) && killScoreModule != null) {
+            killScoreModule.enable();
+            return true;
+        }
+        if ("livescore".equals(key) && liveScoreModule != null) {
+            liveScoreModule.enable();
+            return true;
+        }
+        return false;
+    }
+
+    public boolean disableModule(String moduleName) {
+        String key = normalize(moduleName);
+        if ("killscore".equals(key) && killScoreModule != null) {
+            killScoreModule.disable();
+            return true;
+        }
+        if ("livescore".equals(key) && liveScoreModule != null) {
+            liveScoreModule.disable();
+            return true;
+        }
+        return false;
+    }
+
+    public boolean reloadModule(String moduleName) {
+        String key = normalize(moduleName);
+        if ("killscore".equals(key) && killScoreModule != null) {
+            killScoreModule.reload();
+            return true;
+        }
+        if ("livescore".equals(key) && liveScoreModule != null) {
+            liveScoreModule.reload();
+            return true;
+        }
+        return false;
+    }
+
+    public void reloadPluginSelf() {
+        plugin.reloadConfig();
+        if (killScoreModule != null) {
+            killScoreModule.reload();
+        }
+        if (liveScoreModule != null) {
+            liveScoreModule.reload();
+        }
+    }
+
+    private String normalize(String moduleName) {
+        return moduleName == null ? "" : moduleName.toLowerCase(Locale.ROOT).trim();
     }
 }

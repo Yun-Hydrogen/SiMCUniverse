@@ -6,9 +6,10 @@ api-version: 1.20
 description: A modular Spigot plugin framework for SiMCUniverse.
 prefix: SiMCUniverse
 commands:
-  simc:
+  simcuniverse:
     description: SiMCUniverse main command.
-    usage: /<command> [reload|version]
+    usage: /<command> sudo <help|list|disable|enable|reload|version>
+    aliases: [simc]
     permission: simc.admin
   si-killscore:
     description: KillScore module command.

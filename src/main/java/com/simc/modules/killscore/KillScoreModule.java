@@ -8,12 +8,15 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.event.HandlerList;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -26,8 +29,11 @@ public class KillScoreModule {
     private final Map<UUID, Integer> scores = new HashMap<>();
     private final Map<String, Integer> killRules = new HashMap<>();
 
+    private File moduleFolder;
     private File configFile;
+    private File dataFile;
     private YamlConfiguration config;
+    private YamlConfiguration data;
 
     private String killScoreName;
     private boolean scoreboardEnabled;
@@ -37,30 +43,64 @@ public class KillScoreModule {
     private String deathMultiplierRounding;
 
     private int scoreboardTaskId = -1;
+    private boolean enabled;
+    private KillScoreListener listener;
+    private KillScoreCommand command;
 
     public KillScoreModule(SiMCUniverse plugin) {
         this.plugin = plugin;
     }
 
     public void initialize() {
+        if (enabled) {
+            return;
+        }
+
         loadConfig();
         registerCommand();
         registerListener();
         startScoreboardTask();
+        enabled = true;
         plugin.getLogger().info("KillScore module initialized.");
     }
 
     public void shutdown() {
+        if (!enabled) {
+            return;
+        }
+
         saveScoresToConfig();
         stopScoreboardTask();
+        if (listener != null) {
+            HandlerList.unregisterAll(listener);
+            listener = null;
+        }
+        enabled = false;
         plugin.getLogger().info("KillScore module shutdown completed.");
     }
 
     public void reload() {
+        if (!enabled) {
+            loadConfig();
+            return;
+        }
+
         loadConfig();
         stopScoreboardTask();
         startScoreboardTask();
         updateScoreboards();
+    }
+
+    public void enable() {
+        initialize();
+    }
+
+    public void disable() {
+        shutdown();
+    }
+
+    public boolean isEnabled() {
+        return enabled;
     }
 
     public int getScore(UUID uuid) {
@@ -92,6 +132,10 @@ public class KillScoreModule {
     }
 
     public void handleKill(Player killer, NamespacedKey key) {
+        if (!enabled) {
+            return;
+        }
+
         String namespacedId = key.toString();
         int delta = killRules.getOrDefault(namespacedId, 0);
         if (delta <= 0) {
@@ -105,6 +149,10 @@ public class KillScoreModule {
     }
 
     public void handlePlayerDeath(Player player) {
+        if (!enabled) {
+            return;
+        }
+
         if (!deathMultiplierEnabled) {
             return;
         }
@@ -133,13 +181,16 @@ public class KillScoreModule {
             plugin.getLogger().warning("Command si-killscore is missing in plugin.yml");
             return;
         }
-        KillScoreCommand command = new KillScoreCommand(this);
+        if (command == null) {
+            command = new KillScoreCommand(this);
+        }
         plugin.getCommand("si-killscore").setExecutor(command);
         plugin.getCommand("si-killscore").setTabCompleter(command);
     }
 
     private void registerListener() {
-        plugin.getServer().getPluginManager().registerEvents(new KillScoreListener(this), plugin);
+        listener = new KillScoreListener(this);
+        plugin.getServer().getPluginManager().registerEvents(listener, plugin);
     }
 
     private void loadConfig() {
@@ -147,12 +198,27 @@ public class KillScoreModule {
             plugin.getLogger().warning("Could not create plugin data folder.");
         }
 
-        configFile = new File(plugin.getDataFolder(), "killscore.yml");
+        moduleFolder = new File(plugin.getDataFolder(), "killscore");
+        if (!moduleFolder.exists() && !moduleFolder.mkdirs()) {
+            plugin.getLogger().warning("Could not create killscore module folder.");
+        }
+
+        configFile = new File(moduleFolder, "config.yml");
+        dataFile = new File(moduleFolder, "data.yml");
+
+        migrateLegacyFilesIfNeeded();
+
         if (!configFile.exists()) {
-            plugin.saveResource("killscore.yml", false);
+            plugin.saveResource("killscore/config.yml", false);
+        }
+        if (!dataFile.exists()) {
+            data = new YamlConfiguration();
+            data.set("scores", new HashMap<>());
+            saveDataFile();
         }
 
         config = YamlConfiguration.loadConfiguration(configFile);
+        data = YamlConfiguration.loadConfiguration(dataFile);
 
         killScoreName = config.getString("killscore-name", "击杀分");
         scoreboardEnabled = config.getBoolean("scoreboard.enabled", true);
@@ -173,13 +239,15 @@ public class KillScoreModule {
             }
         }
 
+        migrateScoresFromConfigToDataIfNeeded();
         loadScoresFromConfig();
         saveConfigFile();
+        saveDataFile();
     }
 
     private void loadScoresFromConfig() {
         scores.clear();
-        ConfigurationSection scoreSection = config.getConfigurationSection("scores");
+        ConfigurationSection scoreSection = data.getConfigurationSection("scores");
         if (scoreSection == null) {
             return;
         }
@@ -196,11 +264,11 @@ public class KillScoreModule {
     }
 
     private void saveScoresToConfig() {
-        config.set("scores", null);
+        data.set("scores", null);
         for (Map.Entry<UUID, Integer> entry : scores.entrySet()) {
-            config.set("scores." + entry.getKey(), entry.getValue());
+            data.set("scores." + entry.getKey(), entry.getValue());
         }
-        saveConfigFile();
+        saveDataFile();
     }
 
     private void saveConfigFile() {
@@ -209,6 +277,39 @@ public class KillScoreModule {
         } catch (IOException e) {
             plugin.getLogger().severe("Failed to save killscore.yml: " + e.getMessage());
         }
+    }
+
+    private void saveDataFile() {
+        try {
+            data.save(dataFile);
+        } catch (IOException e) {
+            plugin.getLogger().severe("Failed to save killscore data.yml: " + e.getMessage());
+        }
+    }
+
+    private void migrateLegacyFilesIfNeeded() {
+        File legacyConfig = new File(plugin.getDataFolder(), "killscore.yml");
+        if (!configFile.exists() && legacyConfig.exists()) {
+            try {
+                Files.move(legacyConfig.toPath(), configFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException e) {
+                plugin.getLogger().warning("Failed to migrate legacy killscore.yml: " + e.getMessage());
+            }
+        }
+    }
+
+    private void migrateScoresFromConfigToDataIfNeeded() {
+        ConfigurationSection oldScores = config.getConfigurationSection("scores");
+        ConfigurationSection newScores = data.getConfigurationSection("scores");
+        if (oldScores == null || (newScores != null && !newScores.getKeys(false).isEmpty())) {
+            return;
+        }
+
+        data.set("scores", null);
+        for (String key : oldScores.getKeys(false)) {
+            data.set("scores." + key, oldScores.getInt(key, 0));
+        }
+        config.set("scores", null);
     }
 
     private void startScoreboardTask() {

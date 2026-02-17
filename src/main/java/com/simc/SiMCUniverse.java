@@ -21,10 +21,10 @@ public class SiMCUniverse extends JavaPlugin {
         pluginManager = new PluginManager(this);
         pluginManager.initialize();
 
-        if (getCommand("simc") != null) {
+        if (getCommand("simcuniverse") != null) {
             SimcCommand simcCommand = new SimcCommand(this);
-            getCommand("simc").setExecutor(simcCommand);
-            getCommand("simc").setTabCompleter(simcCommand);
+            getCommand("simcuniverse").setExecutor(simcCommand);
+            getCommand("simcuniverse").setTabCompleter(simcCommand);
         }
 
         getLogger().info("SiMCUniverse enabled. Version: " + getDescription().getVersion());

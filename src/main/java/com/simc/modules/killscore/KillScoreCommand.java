@@ -26,6 +26,11 @@ public class KillScoreCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
+        if (!module.isEnabled()) {
+            sender.sendMessage("§cKillScore 模块当前已禁用。");
+            return true;
+        }
+
         if (equalsIgnoreCase(args[0], "show")) {
             if (!(sender instanceof Player)) {
                 sender.sendMessage("§c控制台无法使用该命令，请使用 sudo 子命令。");
@@ -77,7 +82,7 @@ public class KillScoreCommand implements CommandExecutor, TabCompleter {
                 return true;
             case "reload":
                 module.reload();
-                sender.sendMessage("§akillscore.yml 已重载。");
+                sender.sendMessage("§akillscore/config.yml 已重载。");
                 return true;
             default:
                 sender.sendMessage("§c未知 sudo 子命令。可用: add, set, reset, reload");
@@ -129,7 +134,7 @@ public class KillScoreCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(module.formatText("§f/si-killscore sudo add <player> <score> §7- 增减玩家 %killscore_name%"));
         sender.sendMessage(module.formatText("§f/si-killscore sudo set <player> <score> §7- 设置玩家 %killscore_name%"));
         sender.sendMessage(module.formatText("§f/si-killscore sudo reset §7- 重置所有玩家 %killscore_name%"));
-        sender.sendMessage("§f/si-killscore sudo reload §7- 重载 killscore.yml");
+        sender.sendMessage("§f/si-killscore sudo reload §7- 重载 killscore/config.yml");
     }
 
     @Override

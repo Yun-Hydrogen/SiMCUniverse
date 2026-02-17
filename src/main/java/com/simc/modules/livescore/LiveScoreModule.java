@@ -6,9 +6,12 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.event.HandlerList;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -22,8 +25,11 @@ public class LiveScoreModule {
     private final SiMCUniverse plugin;
     private final Map<UUID, Integer> scores = new HashMap<>();
 
+    private File moduleFolder;
     private File configFile;
+    private File dataFile;
     private YamlConfiguration config;
+    private YamlConfiguration data;
 
     private boolean tabDisplayEnabled;
     private int gainIntervalSeconds;
@@ -34,36 +40,70 @@ public class LiveScoreModule {
     private String deathMultiplierRounding;
 
     private boolean paused;
+    private boolean enabled;
 
     private int taskId = -1;
     private int secondCounter = 0;
+    private LiveScoreListener listener;
+    private LiveScoreCommand command;
 
     public LiveScoreModule(SiMCUniverse plugin) {
         this.plugin = plugin;
     }
 
     public void initialize() {
+        if (enabled) {
+            return;
+        }
+
         loadConfig();
         registerCommand();
         registerListener();
         startTask();
         updateTabDisplay();
+        enabled = true;
         plugin.getLogger().info("LiveScore module initialized.");
     }
 
     public void shutdown() {
+        if (!enabled) {
+            return;
+        }
+
         saveScoresToConfig();
         stopTask();
         clearTabDisplay();
+        if (listener != null) {
+            HandlerList.unregisterAll(listener);
+            listener = null;
+        }
+        enabled = false;
         plugin.getLogger().info("LiveScore module shutdown completed.");
     }
 
     public void reload() {
+        if (!enabled) {
+            loadConfig();
+            return;
+        }
+
         loadConfig();
         secondCounter = 0;
         stopTask();
         startTask();
         updateTabDisplay();
+    }
+
+    public void enable() {
+        initialize();
+    }
+
+    public void disable() {
+        shutdown();
+    }
+
+    public boolean isEnabled() {
+        return enabled;
     }
 
     public int getScore(UUID uuid) {
@@ -105,6 +145,10 @@ public class LiveScoreModule {
     }
 
     public void handlePlayerDeath(Player player) {
+        if (!enabled) {
+            return;
+        }
+
         if (!deathMultiplierEnabled) {
             return;
         }
@@ -133,13 +177,16 @@ public class LiveScoreModule {
             plugin.getLogger().warning("Command si-livescore is missing in plugin.yml");
             return;
         }
-        LiveScoreCommand command = new LiveScoreCommand(this);
+        if (command == null) {
+            command = new LiveScoreCommand(this);
+        }
         plugin.getCommand("si-livescore").setExecutor(command);
         plugin.getCommand("si-livescore").setTabCompleter(command);
     }
 
     private void registerListener() {
-        plugin.getServer().getPluginManager().registerEvents(new LiveScoreListener(this), plugin);
+        listener = new LiveScoreListener(this);
+        plugin.getServer().getPluginManager().registerEvents(listener, plugin);
     }
 
     private void loadConfig() {
@@ -147,12 +194,27 @@ public class LiveScoreModule {
             plugin.getLogger().warning("Could not create plugin data folder.");
         }
 
-        configFile = new File(plugin.getDataFolder(), "livescore.yml");
+        moduleFolder = new File(plugin.getDataFolder(), "livescore");
+        if (!moduleFolder.exists() && !moduleFolder.mkdirs()) {
+            plugin.getLogger().warning("Could not create livescore module folder.");
+        }
+
+        configFile = new File(moduleFolder, "config.yml");
+        dataFile = new File(moduleFolder, "data.yml");
+
+        migrateLegacyFilesIfNeeded();
+
         if (!configFile.exists()) {
-            plugin.saveResource("livescore.yml", false);
+            plugin.saveResource("livescore/config.yml", false);
+        }
+        if (!dataFile.exists()) {
+            data = new YamlConfiguration();
+            data.set("scores", new HashMap<>());
+            saveDataFile();
         }
 
         config = YamlConfiguration.loadConfiguration(configFile);
+        data = YamlConfiguration.loadConfiguration(dataFile);
 
         tabDisplayEnabled = config.getBoolean("tab-display.enabled", true);
 
@@ -165,13 +227,15 @@ public class LiveScoreModule {
 
         paused = config.getBoolean("runtime.paused", false);
 
+        migrateScoresFromConfigToDataIfNeeded();
         loadScoresFromConfig();
         saveConfigFile();
+        saveDataFile();
     }
 
     private void loadScoresFromConfig() {
         scores.clear();
-        ConfigurationSection section = config.getConfigurationSection("scores");
+        ConfigurationSection section = data.getConfigurationSection("scores");
         if (section == null) {
             return;
         }
@@ -188,11 +252,11 @@ public class LiveScoreModule {
     }
 
     private void saveScoresToConfig() {
-        config.set("scores", null);
+        data.set("scores", null);
         for (Map.Entry<UUID, Integer> entry : scores.entrySet()) {
-            config.set("scores." + entry.getKey(), entry.getValue());
+            data.set("scores." + entry.getKey(), entry.getValue());
         }
-        saveConfigFile();
+        saveDataFile();
     }
 
     private void saveConfigFile() {
@@ -201,6 +265,39 @@ public class LiveScoreModule {
         } catch (IOException e) {
             plugin.getLogger().severe("Failed to save livescore.yml: " + e.getMessage());
         }
+    }
+
+    private void saveDataFile() {
+        try {
+            data.save(dataFile);
+        } catch (IOException e) {
+            plugin.getLogger().severe("Failed to save livescore data.yml: " + e.getMessage());
+        }
+    }
+
+    private void migrateLegacyFilesIfNeeded() {
+        File legacyConfig = new File(plugin.getDataFolder(), "livescore.yml");
+        if (!configFile.exists() && legacyConfig.exists()) {
+            try {
+                Files.move(legacyConfig.toPath(), configFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException e) {
+                plugin.getLogger().warning("Failed to migrate legacy livescore.yml: " + e.getMessage());
+            }
+        }
+    }
+
+    private void migrateScoresFromConfigToDataIfNeeded() {
+        ConfigurationSection oldScores = config.getConfigurationSection("scores");
+        ConfigurationSection newScores = data.getConfigurationSection("scores");
+        if (oldScores == null || (newScores != null && !newScores.getKeys(false).isEmpty())) {
+            return;
+        }
+
+        data.set("scores", null);
+        for (String key : oldScores.getKeys(false)) {
+            data.set("scores." + key, oldScores.getInt(key, 0));
+        }
+        config.set("scores", null);
     }
 
     private void startTask() {
@@ -215,6 +312,10 @@ public class LiveScoreModule {
     }
 
     private void tickEverySecond() {
+        if (!enabled) {
+            return;
+        }
+
         if (tabDisplayEnabled) {
             updateTabDisplay();
         }
