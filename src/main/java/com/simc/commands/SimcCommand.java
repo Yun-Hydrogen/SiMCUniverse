@@ -111,11 +111,13 @@ public class SimcCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length == 3 && equalsIgnoreCase(args[0], "sudo")) {
+            List<String> modules = new ArrayList<>(plugin.getPluginManagerInstance().listModuleStatus().keySet());
             if (equalsIgnoreCase(args[1], "disable") || equalsIgnoreCase(args[1], "enable")) {
-                return filterPrefix(Arrays.asList("killscore", "livescore"), args[2]);
+                return filterPrefix(modules, args[2]);
             }
             if (equalsIgnoreCase(args[1], "reload")) {
-                return filterPrefix(Arrays.asList("killscore", "livescore", "plugin-self"), args[2]);
+                modules.add("plugin-self");
+                return filterPrefix(modules, args[2]);
             }
         }
 

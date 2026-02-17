@@ -1,0 +1,27 @@
+# 商店第1页，1~27 对应 GUI 前三行
+title: "商店"
+
+1:
+  name: "&a木材补给"
+  lore:
+    - "&7包含基础木材"
+    - "&#66CCFF适合新手开荒"
+  icon: "minecraft:oak_log"
+  icon-amount: 16
+  cost: 10
+  exchange-type: item
+  items:
+    "minecraft:oak_log": 32
+    "minecraft:torch": 16
+
+2:
+  name: "&b每日补给"
+  lore:
+    - "&7执行一组奖励命令"
+  icon: "minecraft:paper"
+  icon-amount: 1
+  cost: 20
+  exchange-type: command
+  commands:
+    - "tellraw %player% {\"text\":\"兑换成功!\",\"color\":\"green\"}"
+    - "give %player% minecraft:bread 8"

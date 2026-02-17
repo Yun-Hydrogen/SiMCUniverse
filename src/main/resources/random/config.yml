@@ -1,0 +1,34 @@
+# SiMCUniverse - Random 模块主配置
+
+# 货币来源: killscore 或 livescore
+currency-source: killscore
+
+draw-cost:
+  single: 10
+  ten: 90
+
+draw:
+  ten-guarantee-gold: true
+
+pity:
+  threshold: 100
+
+custom-music:
+  enabled: false
+  # 建议使用自定义命名空间，避免原版声音键被客户端其他资源包影响
+  sound-id: "simcuniverse:random_open"
+  # 为避免服务器自动下发时出现原版/自定义音效混播，建议开启
+  require-pack-ready: true
+  volume: 1.0
+  pitch: 1.0
+
+messages:
+  module-disabled: "&cRandom 模块已禁用。"
+  not-enough-currency: "&c你的%shop_currency%不足。需要 &e%cost%&c，当前 &e%balance%"
+  sign-prompt: "&e请在弹出的告示牌中签署确认抽奖（可直接确认）。"
+  sign-fallback: "&e告示牌输入不可用，直接在聊天输入任意内容即可确认抽奖。"
+  reload-success: "&aRandom 配置已重载。"
+  reset-success: "&a已重置所有玩家保底点数。"
+  set-success: "&a已设置 %player% 的保底点数为 &e%point%"
+  pity-not-enough: "&c保底点数不足。"
+  pity-redeem-success: "&d保底兑换成功，点数已清零。"

@@ -17,6 +17,12 @@ commands:
   si-livescore:
     description: LiveScore module command.
     usage: /<command> help
+  si-shop:
+    description: Shop module command.
+    usage: /<command>
+  si-random:
+    description: Random module command.
+    usage: /<command>
 permissions:
   simc.admin:
     description: Allows managing SiMCUniverse.
@@ -26,4 +32,10 @@ permissions:
     default: op
   simc.livescore.sudo:
     description: Allows using si-livescore sudo commands.
+    default: op
+  simc.shop.sudo:
+    description: Allows using si-shop sudo commands.
+    default: op
+  simc.random.sudo:
+    description: Allows using si-random sudo commands.
     default: op

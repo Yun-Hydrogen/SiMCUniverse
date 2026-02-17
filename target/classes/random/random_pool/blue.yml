@@ -1,0 +1,5 @@
+chance: 0.8
+items:
+  "minecraft:iron_ingot": 8
+  "minecraft:coal": 16
+  "minecraft:torch": 32
