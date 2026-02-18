@@ -17,10 +17,12 @@ messages:
   position-confirmed: "&a已确认位置任务完成。"
 
 # 日常任务重置时间（格式 HH:MM:SS）
+# 时区固定为北京时间 UTC+8
 # 例：04:00:00 表示每天凌晨 4 点重置 daily 任务。
 daily-reset-time: "04:00:00"
 
 # 每周任务重置时间（格式 星期:HH:MM:SS）
+# 时区固定为北京时间 UTC+8
 # 星期支持：MONDAY/TUESDAY/WEDNESDAY/THURSDAY/FRIDAY/SATURDAY/SUNDAY
 # 例：MONDAY:04:00:00 表示每周一凌晨 4 点重置 weekly 任务。
 weekly-reset-time: "MONDAY:04:00:00"

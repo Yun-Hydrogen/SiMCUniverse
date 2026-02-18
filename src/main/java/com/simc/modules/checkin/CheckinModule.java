@@ -6,9 +6,6 @@ import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
-import org.bukkit.advancement.Advancement;
-import org.bukkit.advancement.AdvancementProgress;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.enchantments.Enchantment;
@@ -24,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -36,6 +34,7 @@ import java.util.UUID;
 
 public class CheckinModule {
     private final SiMCUniverse plugin;
+    private static final ZoneOffset RESET_ZONE_OFFSET = ZoneOffset.ofHours(8);
 
     private boolean enabled;
 
@@ -267,6 +266,8 @@ public class CheckinModule {
 
         TaskProgress progress = getProgress(player.getUniqueId(), task.id);
         boolean locked = isTaskLocked(player, task);
+        boolean finishedNonLoop = !task.loop && progress.progress >= task.totalDays;
+        boolean signedThisPeriod = getCurrentDayKey(task.resetTime).equals(progress.lastDayKey);
 
         meta.setDisplayName(Utils.colorize(task.title));
         List<String> lore = new ArrayList<>();
@@ -274,9 +275,18 @@ public class CheckinModule {
             lore.add(Utils.colorize(line));
         }
         lore.add(Utils.colorize("&7ID: &f" + task.id));
+        lore.add(Utils.colorize("&7签到类型: &f" + task.scheduleType.display));
         lore.add(Utils.colorize("&7进度: &e" + Math.min(progress.progress, task.totalDays) + "&7/&e" + task.totalDays));
         lore.add(Utils.colorize("&7重置时间: &f" + task.resetTime));
-        lore.add(Utils.colorize(locked ? "&c状态: 未解锁" : "&a状态: 可签到"));
+        if (locked) {
+            lore.add(Utils.colorize("&c状态: 未解锁"));
+        } else if (finishedNonLoop) {
+            lore.add(Utils.colorize("&e状态: 已完成"));
+        } else if (signedThisPeriod) {
+            lore.add(Utils.colorize("&b状态: 本轮已签到"));
+        } else {
+            lore.add(Utils.colorize("&a状态: 可签到"));
+        }
         meta.setLore(lore);
 
         if (locked) {
@@ -310,69 +320,20 @@ public class CheckinModule {
     }
 
     private void sendToast(Player player, CheckinTask task, int current, int total) {
-        playToastSound(player);
+        String title = "今日已签到！";
+        String content = "已签到" + stripColor(task.title) + " " + current + "/" + total;
+        String icon = iconSymbol(task.icon);
 
-        String toastTitle = "今日已签到！";
-        String toastContent = "已签到" + stripColor(task.title) + " " + current + "/" + total;
-        String iconMaterial = task.icon;
-
-        String json = buildToastAdvancementJson(toastTitle, toastContent, iconMaterial);
-        NamespacedKey key = new NamespacedKey(plugin, "checkin_toast_" + player.getUniqueId().toString().replace("-", ""));
-
-        try {
-            Bukkit.getUnsafe().loadAdvancement(key, json);
-            Advancement advancement = Bukkit.getAdvancement(key);
-            if (advancement != null) {
-                AdvancementProgress progress = player.getAdvancementProgress(advancement);
-                if (!progress.isDone()) {
-                    for (String criteria : progress.getRemainingCriteria()) {
-                        progress.awardCriteria(criteria);
-                    }
-                }
-
-                Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                    try {
-                        Bukkit.getUnsafe().removeAdvancement(key);
-                    } catch (Exception ignored) {}
-                }, 20L);
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (player.isOnline()) {
+                player.spigot().sendMessage(
+                        ChatMessageType.ACTION_BAR,
+                        new TextComponent(Utils.colorize("&7[" + icon + "&7] &a" + title + " &8| &f" + content))
+                );
             }
-        } catch (Exception e) {
-            plugin.getLogger().warning("Failed to send toast notification: " + e.getMessage());
-        }
-    }
+        }, 2L);
 
-    private String buildToastAdvancementJson(String title, String description, String iconMaterial) {
-        String mat = iconMaterial == null || iconMaterial.isBlank() ? "minecraft:emerald" : iconMaterial;
-        if (!mat.contains(":")) {
-            mat = "minecraft:" + mat;
-        }
-
-        String escapedTitle = escapeJson(title);
-        String escapedDesc = escapeJson(description);
-
-        return "{" +
-                "\"criteria\":{\"trigger\":{\"trigger\":\"minecraft:impossible\"}}," +
-                "\"display\":{" +
-                "\"icon\":{\"item\":\"" + mat + "\"}," +
-                "\"title\":{\"text\":\"" + escapedTitle + "\"}," +
-                "\"description\":{\"text\":\"" + escapedDesc + "\"}," +
-                "\"frame\":\"task\"," +
-                "\"show_toast\":true," +
-                "\"announce_to_chat\":false," +
-                "\"hidden\":true" +
-                "}" +
-                "}";
-    }
-
-    private String escapeJson(String text) {
-        if (text == null) {
-            return "";
-        }
-        return text.replace("\\", "\\\\")
-                .replace("\"", "\\\"")
-                .replace("\n", "\\n")
-                .replace("\r", "\\r")
-                .replace("\t", "\\t");
+        playToastSound(player);
     }
 
     private String stripColor(String s) {
@@ -555,6 +516,8 @@ public class CheckinModule {
             task.title = yml.getString("title", "&f未命名签到");
             task.icon = yml.getString("icon", "minecraft:emerald");
             task.lore = yml.getStringList("lore");
+            String scheduleRaw = yml.getString("checkin-type", yml.getString("type", "daily"));
+            task.scheduleType = CheckinScheduleType.from(scheduleRaw);
             task.totalDays = Math.max(1, yml.getInt("days", 7));
 
             String reset = yml.getString("reset-time", "00:00:00");
@@ -674,13 +637,13 @@ public class CheckinModule {
     }
 
     private String getCurrentDayKey(LocalTime resetTime) {
-        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+        java.time.LocalDateTime now = java.time.LocalDateTime.now(RESET_ZONE_OFFSET);
         LocalDate date = now.toLocalTime().isBefore(resetTime) ? now.toLocalDate().minusDays(1) : now.toLocalDate();
         return date.toString();
     }
 
     private String getPreviousDayKey(LocalTime resetTime) {
-        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+        java.time.LocalDateTime now = java.time.LocalDateTime.now(RESET_ZONE_OFFSET);
         LocalDate date = now.toLocalTime().isBefore(resetTime) ? now.toLocalDate().minusDays(2) : now.toLocalDate().minusDays(1);
         return date.toString();
     }
@@ -728,6 +691,24 @@ public class CheckinModule {
         ALWAYS_LOCKED
     }
 
+    public enum CheckinScheduleType {
+        DAILY("每天"),
+        WEEKLY("每周");
+
+        private final String display;
+
+        CheckinScheduleType(String display) {
+            this.display = display;
+        }
+
+        public static CheckinScheduleType from(String raw) {
+            if (raw != null && raw.equalsIgnoreCase("weekly")) {
+                return WEEKLY;
+            }
+            return DAILY;
+        }
+    }
+
     public enum LockOverride {
         DEFAULT("default"),
         LOCKED("locked"),
@@ -755,6 +736,7 @@ public class CheckinModule {
         private String title;
         private String icon;
         private List<String> lore = new ArrayList<>();
+        private CheckinScheduleType scheduleType = CheckinScheduleType.DAILY;
         private int totalDays;
         private LocalTime resetTime = LocalTime.MIDNIGHT;
         private UnlockType unlockType = UnlockType.NONE;

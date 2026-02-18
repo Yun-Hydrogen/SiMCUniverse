@@ -5,6 +5,8 @@ id: daily_login
 
 # 签到任务标题，支持颜色代码（&）和 HEX 颜色（#66CCFF）
 title: "&#66CCFF每日签到"
+# 签到类型：daily（每天）| weekly（每周）
+checkin-type: daily
 # 签到任务图标物品，使用名字空间格式（如 minecraft:emerald）
 icon: "minecraft:emerald"
 # 签到任务介绍，支持多行和颜色代码
@@ -14,7 +16,7 @@ lore:
 
 # 签到天数，正整数，表示需要签到多少天完成任务
 days: 7
-# 重置时间，格式为 HH:mm:ss，表示每天几点重置签到状态
+# 重置时间，格式为 HH:mm:ss，按北京时间（UTC+8）计算
 reset-time: "04:00:00"
 
 # 解锁条件，type 可选 none（无条件解锁）、after_task（完成指定任务后解锁）、always_locked（始终锁定）

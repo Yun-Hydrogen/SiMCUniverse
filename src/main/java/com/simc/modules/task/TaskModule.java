@@ -2,12 +2,11 @@ package com.simc.modules.task;
 
 import com.simc.SiMCUniverse;
 import com.simc.utils.Utils;
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
-import org.bukkit.advancement.Advancement;
-import org.bukkit.advancement.AdvancementProgress;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.enchantments.Enchantment;
@@ -26,6 +25,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneOffset;
 import java.time.temporal.WeekFields;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -39,6 +39,7 @@ import java.util.UUID;
 
 public class TaskModule {
     private final SiMCUniverse plugin;
+    private static final ZoneOffset RESET_ZONE_OFFSET = ZoneOffset.ofHours(8);
 
     private boolean enabled;
 
@@ -463,66 +464,11 @@ public class TaskModule {
     }
 
     private void sendToast(Player player, TaskDefinition task) {
-        String title = "任务完成！";
-        String desc = "完成任务：" + stripColor(task.title);
-
-        String json = buildToastAdvancementJson(title, desc, task.icon);
-        NamespacedKey key = new NamespacedKey(plugin,
-                "task_toast_" + player.getUniqueId().toString().replace("-", "") + "_" + task.id);
-
-        try {
-            Bukkit.getUnsafe().loadAdvancement(key, json);
-            Advancement advancement = Bukkit.getAdvancement(key);
-            if (advancement != null) {
-                AdvancementProgress progress = player.getAdvancementProgress(advancement);
-                for (String criteria : progress.getRemainingCriteria()) {
-                    progress.awardCriteria(criteria);
-                }
-
-                Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                    try {
-                        Bukkit.getUnsafe().removeAdvancement(key);
-                    } catch (Exception ignored) {
-                    }
-                }, 20L);
-            }
-        } catch (Exception e) {
-            plugin.getLogger().warning("Failed to show task toast: " + e.getMessage());
-        }
-    }
-
-    private String buildToastAdvancementJson(String title, String description, String iconMaterial) {
-        String mat = iconMaterial == null || iconMaterial.isBlank() ? "minecraft:paper" : iconMaterial;
-        if (!mat.contains(":")) {
-            mat = "minecraft:" + mat;
-        }
-
-        String escapedTitle = escapeJson(title);
-        String escapedDesc = escapeJson(description);
-
-        return "{" +
-                "\"criteria\":{\"trigger\":{\"trigger\":\"minecraft:impossible\"}}," +
-                "\"display\":{" +
-                "\"icon\":{\"item\":\"" + mat + "\"}," +
-                "\"title\":{\"text\":\"" + escapedTitle + "\"}," +
-                "\"description\":{\"text\":\"" + escapedDesc + "\"}," +
-                "\"frame\":\"task\"," +
-                "\"show_toast\":true," +
-                "\"announce_to_chat\":false," +
-                "\"hidden\":true" +
-                "}" +
-                "}";
-    }
-
-    private String escapeJson(String text) {
-        if (text == null) {
-            return "";
-        }
-        return text.replace("\\", "\\\\")
-                .replace("\"", "\\\"")
-                .replace("\n", "\\n")
-                .replace("\r", "\\r")
-                .replace("\t", "\\t");
+        String content = "完成任务：" + stripColor(task.title);
+        player.spigot().sendMessage(
+                ChatMessageType.ACTION_BAR,
+                new TextComponent(Utils.colorize("&a" + content))
+        );
     }
 
     private String stripColor(String text) {
@@ -888,7 +834,7 @@ public class TaskModule {
             return "achievement";
         }
 
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(RESET_ZONE_OFFSET);
 
         if (category == TaskCategory.DAILY) {
             LocalDate date = now.toLocalTime().isBefore(dailyResetTime)

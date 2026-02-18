@@ -29,6 +29,9 @@ commands:
   si-task:
     description: Task module command.
     usage: /<command>
+  si-protection:
+    description: Protection module command.
+    usage: /<command>
 permissions:
   simc.admin:
     description: Allows managing SiMCUniverse.
@@ -50,4 +53,7 @@ permissions:
     default: op
   simc.task.sudo:
     description: Allows using si-task sudo commands.
+    default: op
+  simc.protection.sudo:
+    description: Allows using si-protection sudo commands.
     default: op

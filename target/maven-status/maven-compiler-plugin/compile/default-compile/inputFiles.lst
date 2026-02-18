@@ -10,6 +10,9 @@ e:\project-code\simcuniverse\SiMCUniverse\src\main\java\com\simc\modules\killsco
 e:\project-code\simcuniverse\SiMCUniverse\src\main\java\com\simc\modules\livescore\LiveScoreCommand.java
 e:\project-code\simcuniverse\SiMCUniverse\src\main\java\com\simc\modules\livescore\LiveScoreListener.java
 e:\project-code\simcuniverse\SiMCUniverse\src\main\java\com\simc\modules\livescore\LiveScoreModule.java
+e:\project-code\simcuniverse\SiMCUniverse\src\main\java\com\simc\modules\protection\ProtectionCommand.java
+e:\project-code\simcuniverse\SiMCUniverse\src\main\java\com\simc\modules\protection\ProtectionListener.java
+e:\project-code\simcuniverse\SiMCUniverse\src\main\java\com\simc\modules\protection\ProtectionModule.java
 e:\project-code\simcuniverse\SiMCUniverse\src\main\java\com\simc\modules\random\RandomCommand.java
 e:\project-code\simcuniverse\SiMCUniverse\src\main\java\com\simc\modules\random\RandomListener.java
 e:\project-code\simcuniverse\SiMCUniverse\src\main\java\com\simc\modules\random\RandomModule.java

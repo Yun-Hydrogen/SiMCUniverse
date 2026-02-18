@@ -1,0 +1,13 @@
+# ================================
+# SiMCUniverse - Protection 模块主配置
+# ================================
+# 说明：
+# 玩家加入游戏时获得 join-protection-seconds 秒伤害免疫。
+# 玩家重生时获得 spawn-protection-seconds 秒伤害免疫。
+# 设置为 0 表示关闭对应保护。
+
+# 玩家加入保护时长（秒）
+join-protection-seconds: 45
+
+# 玩家重生保护时长（秒）
+spawn-protection-seconds: 120
