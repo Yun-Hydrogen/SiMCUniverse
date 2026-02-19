@@ -6,7 +6,7 @@
 
     <groupId>com.simc</groupId>
     <artifactId>SiMCUniverse</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.1-dev</version>
     
     <name>SiMCUniverse</name>
     <url>http://www.example.com</url>

@@ -11,6 +11,11 @@ type: CRAFT
 required:
   "minecraft:bread": 24
 
+# total-required：总数量模式（仅 BREAK/PLACE/INTERACT/KILL/PICKUP/CRAFT 生效）
+# false：按 required 中每一项各自数量完成（分别计数）
+# 正整数：忽略 required 中每一项的单独需求数量，改为统计这些目标操作总和达到该值即完成
+total-required: false
+
 rewards:
   - "tellraw %player% {\"text\":\"任务完成：面包工坊\",\"color\":\"yellow\"}"
   - "give %player% minecraft:emerald 12"

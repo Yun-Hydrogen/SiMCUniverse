@@ -7,6 +7,9 @@ import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.boss.BarColor;
+import org.bukkit.boss.BarStyle;
+import org.bukkit.boss.BossBar;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.enchantments.Enchantment;
@@ -18,6 +21,7 @@ import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.io.File;
 import java.io.IOException;
@@ -54,6 +58,8 @@ public class TaskModule {
     private final Map<String, String> messages = new HashMap<>();
     private final Map<String, TaskDefinition> tasks = new LinkedHashMap<>();
     private final Map<UUID, Map<String, TaskProgress>> playerProgress = new HashMap<>();
+    private final Map<UUID, BossBar> realtimeBossBars = new HashMap<>();
+    private final Map<UUID, BukkitTask> realtimeBossBarHideTasks = new HashMap<>();
 
     private LocalTime dailyResetTime = LocalTime.MIDNIGHT;
     private DayOfWeek weeklyResetDay = DayOfWeek.MONDAY;
@@ -87,6 +93,8 @@ public class TaskModule {
             HandlerList.unregisterAll(listener);
             listener = null;
         }
+
+        clearAllRealtimeBossBars();
 
         saveData();
         enabled = false;
@@ -240,6 +248,8 @@ public class TaskModule {
             progress.value = Math.min(task.requiredValue, progress.value + amount);
             if (progress.value >= task.requiredValue) {
                 completeTask(player, task, progress);
+            } else {
+                updateRealtimeBossBar(player, task, progress);
             }
         }
 
@@ -304,9 +314,17 @@ public class TaskModule {
                 continue;
             }
 
+            boolean matched = false;
+
             for (Map.Entry<String, Integer> req : task.requiredMap.entrySet()) {
                 String reqBase = baseKey(req.getKey());
                 if (!reqBase.equals(targetKey)) {
+                    continue;
+                }
+
+                matched = true;
+
+                if (task.totalRequired > 0) {
                     continue;
                 }
 
@@ -315,8 +333,14 @@ public class TaskModule {
                 progress.entries.put(req.getKey(), next);
             }
 
+            if (task.totalRequired > 0 && matched) {
+                progress.value = Math.min(task.totalRequired, progress.value + amount);
+            }
+
             if (isMapTaskDone(task, progress)) {
                 completeTask(player, task, progress);
+            } else if (matched) {
+                updateRealtimeBossBar(player, task, progress);
             }
         }
 
@@ -324,6 +348,10 @@ public class TaskModule {
     }
 
     private boolean isMapTaskDone(TaskDefinition task, TaskProgress progress) {
+        if (task.totalRequired > 0) {
+            return progress.value >= task.totalRequired;
+        }
+
         for (Map.Entry<String, Integer> entry : task.requiredMap.entrySet()) {
             int now = progress.entries.getOrDefault(entry.getKey(), 0);
             if (now < entry.getValue()) {
@@ -346,9 +374,118 @@ public class TaskModule {
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), finalCmd);
         }
 
+        clearRealtimeBossBar(player.getUniqueId());
+
         player.sendMessage(format("task-complete", task));
         sendToast(player, task);
         saveData();
+    }
+
+    public void clearRealtimeProgress(Player player) {
+        if (player == null) {
+            return;
+        }
+        clearRealtimeBossBar(player.getUniqueId());
+    }
+
+    private void updateRealtimeBossBar(Player player, TaskDefinition task, TaskProgress progress) {
+        if (player == null || task == null || progress == null || progress.completed) {
+            return;
+        }
+        if (!isRealtimeTaskType(task.type)) {
+            return;
+        }
+
+        int current = progressNow(task, progress);
+        int target = progressTarget(task);
+        if (target <= 0) {
+            return;
+        }
+
+        double ratio = Math.max(0D, Math.min(1D, (double) current / (double) target));
+        String title = Utils.colorize(task.title) + " &7进度(&f" + current + "&7/&f" + target + "&7)";
+
+        BossBar bar = realtimeBossBars.computeIfAbsent(player.getUniqueId(), uuid -> {
+            BossBar created = Bukkit.createBossBar("", BarColor.BLUE, BarStyle.SOLID);
+            created.addPlayer(player);
+            created.setVisible(true);
+            return created;
+        });
+
+        if (!bar.getPlayers().contains(player)) {
+            bar.addPlayer(player);
+        }
+        bar.setTitle(Utils.colorize(title));
+        bar.setProgress(ratio);
+        bar.setVisible(true);
+
+        BukkitTask oldHideTask = realtimeBossBarHideTasks.remove(player.getUniqueId());
+        if (oldHideTask != null) {
+            oldHideTask.cancel();
+        }
+
+        BukkitTask hideTask = Bukkit.getScheduler().runTaskLater(plugin,
+                () -> clearRealtimeBossBar(player.getUniqueId()), 100L);
+        realtimeBossBarHideTasks.put(player.getUniqueId(), hideTask);
+    }
+
+    private boolean isRealtimeTaskType(TaskType type) {
+        return type == TaskType.BREAK
+                || type == TaskType.PLACE
+                || type == TaskType.INTERACT
+                || type == TaskType.KILL
+                || type == TaskType.PICKUP
+                || type == TaskType.CRAFT
+                || type == TaskType.GAIN_XP;
+    }
+
+    private int progressNow(TaskDefinition task, TaskProgress progress) {
+        if (task.type == TaskType.GAIN_XP) {
+            return Math.min(progress.value, task.requiredValue);
+        }
+        if (task.totalRequired > 0) {
+            return Math.min(progress.value, task.totalRequired);
+        }
+
+        int now = 0;
+        for (Map.Entry<String, Integer> entry : task.requiredMap.entrySet()) {
+            now += Math.min(entry.getValue(), progress.entries.getOrDefault(entry.getKey(), 0));
+        }
+        return now;
+    }
+
+    private int progressTarget(TaskDefinition task) {
+        if (task.type == TaskType.GAIN_XP) {
+            return Math.max(1, task.requiredValue);
+        }
+        if (task.totalRequired > 0) {
+            return task.totalRequired;
+        }
+
+        int need = 0;
+        for (Map.Entry<String, Integer> entry : task.requiredMap.entrySet()) {
+            need += entry.getValue();
+        }
+        return Math.max(1, need);
+    }
+
+    private void clearAllRealtimeBossBars() {
+        for (UUID uuid : new ArrayList<>(realtimeBossBars.keySet())) {
+            clearRealtimeBossBar(uuid);
+        }
+    }
+
+    private void clearRealtimeBossBar(UUID uuid) {
+        BukkitTask task = realtimeBossBarHideTasks.remove(uuid);
+        if (task != null) {
+            task.cancel();
+        }
+
+        BossBar bar = realtimeBossBars.remove(uuid);
+        if (bar != null) {
+            bar.removeAll();
+            bar.setVisible(false);
+        }
     }
 
     private TaskProgress getFreshProgress(UUID uuid, TaskDefinition task) {
@@ -421,6 +558,10 @@ public class TaskModule {
 
         if (task.type == TaskType.POSITION) {
             return progress.value >= 1 ? "已到达，可确认" : "未到达";
+        }
+
+        if (task.totalRequired > 0) {
+            return Math.min(progress.value, task.totalRequired) + "/" + task.totalRequired;
         }
 
         int need = 0;
@@ -577,10 +718,7 @@ public class TaskModule {
             saveData();
         }
 
-        File sample = new File(confFolder, "daily_break_stone.yml");
-        if (!sample.exists()) {
-            plugin.saveResource("task/task_conf/daily_break_stone.yml", false);
-        }
+        ensureDefaultTaskSamplesWhenEmpty();
 
         config = YamlConfiguration.loadConfiguration(configFile);
         data = YamlConfiguration.loadConfiguration(dataFile);
@@ -683,7 +821,68 @@ public class TaskModule {
             return null;
         }
 
+        if (supportsTotalRequired(task.type)) {
+            task.totalRequired = parseTotalRequired(yml.get("total-required"));
+        }
+
         return task;
+    }
+
+    private void ensureDefaultTaskSamplesWhenEmpty() {
+        File[] ymlFiles = confFolder.listFiles((dir, name) -> name.toLowerCase(Locale.ROOT).endsWith(".yml"));
+        if (ymlFiles != null && ymlFiles.length > 0) {
+            return;
+        }
+
+        String[] defaults = new String[]{
+                "daily_break_stone.yml",
+                "daily_place_dirt.yml",
+                "daily_interact_chest.yml",
+                "daily_kill_zombie.yml",
+                "daily_gain_xp.yml",
+                "daily_pickup_log.yml",
+                "weekly_craft_bread.yml",
+                "achievement_visit_spawn.yml"
+        };
+
+        for (String fileName : defaults) {
+            plugin.saveResource("task/task_conf/" + fileName, false);
+        }
+    }
+
+    private boolean supportsTotalRequired(TaskType type) {
+        return type == TaskType.BREAK
+                || type == TaskType.PLACE
+                || type == TaskType.INTERACT
+                || type == TaskType.KILL
+                || type == TaskType.PICKUP
+                || type == TaskType.CRAFT;
+    }
+
+    private int parseTotalRequired(Object raw) {
+        if (raw == null) {
+            return 0;
+        }
+
+        if (raw instanceof Boolean) {
+            return (Boolean) raw ? 0 : 0;
+        }
+
+        if (raw instanceof Number) {
+            int value = ((Number) raw).intValue();
+            return Math.max(0, value);
+        }
+
+        String text = String.valueOf(raw).trim();
+        if (text.isEmpty() || "false".equalsIgnoreCase(text)) {
+            return 0;
+        }
+
+        try {
+            return Math.max(0, Integer.parseInt(text));
+        } catch (NumberFormatException ignored) {
+            return 0;
+        }
     }
 
     private PositionRequirement parsePositionRequirement(YamlConfiguration yml) {
@@ -918,6 +1117,7 @@ public class TaskModule {
         private TaskCategory category = TaskCategory.DAILY;
         private TaskType type = TaskType.BREAK;
         private LinkedHashMap<String, Integer> requiredMap = new LinkedHashMap<>();
+        private int totalRequired;
         private int requiredValue = 1;
         private PositionRequirement position;
         private List<String> rewards = new ArrayList<>();

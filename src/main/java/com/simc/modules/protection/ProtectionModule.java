@@ -1,12 +1,16 @@
 package com.simc.modules.protection;
 
 import com.simc.SiMCUniverse;
+import com.simc.utils.Utils;
+import org.bukkit.Bukkit;
+import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.HandlerList;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
 
@@ -22,8 +26,14 @@ public class ProtectionModule {
 
     private int joinProtectionSeconds = 45;
     private int spawnProtectionSeconds = 120;
+    private String messageJoinStart;
+    private String messageSpawnStart;
+    private String messageProtectionEnd;
+    private Sound startSound = Sound.UI_TOAST_IN;
+    private Sound endSound = Sound.UI_TOAST_CHALLENGE_COMPLETE;
 
     private final Map<UUID, Long> protectedUntil = new HashMap<>();
+    private int tickerTaskId = -1;
 
     private ProtectionCommand command;
     private ProtectionListener listener;
@@ -40,6 +50,7 @@ public class ProtectionModule {
         loadAll();
         registerCommand();
         registerListener();
+        startTicker();
         enabled = true;
         plugin.getLogger().info("Protection module initialized.");
     }
@@ -53,6 +64,8 @@ public class ProtectionModule {
             HandlerList.unregisterAll(listener);
             listener = null;
         }
+
+        stopTicker();
 
         protectedUntil.clear();
         enabled = false;
@@ -79,14 +92,14 @@ public class ProtectionModule {
         if (player == null || joinProtectionSeconds <= 0) {
             return;
         }
-        applyProtection(player.getUniqueId(), joinProtectionSeconds);
+        applyProtection(player, joinProtectionSeconds, messageJoinStart);
     }
 
     public void applySpawnProtection(Player player) {
         if (player == null || spawnProtectionSeconds <= 0) {
             return;
         }
-        applyProtection(player.getUniqueId(), spawnProtectionSeconds);
+        applyProtection(player, spawnProtectionSeconds, messageSpawnStart);
     }
 
     public boolean isProtected(Player player) {
@@ -101,7 +114,7 @@ public class ProtectionModule {
 
         long now = System.currentTimeMillis();
         if (until <= now) {
-            protectedUntil.remove(player.getUniqueId());
+            onProtectionEnd(player);
             return false;
         }
         return true;
@@ -119,7 +132,7 @@ public class ProtectionModule {
 
         long remainMillis = until - System.currentTimeMillis();
         if (remainMillis <= 0) {
-            protectedUntil.remove(player.getUniqueId());
+            onProtectionEnd(player);
             return 0;
         }
 
@@ -155,13 +168,90 @@ public class ProtectionModule {
         return false;
     }
 
-    private void applyProtection(UUID uuid, int seconds) {
+    private void applyProtection(Player player, int seconds, String startMessage) {
+        UUID uuid = player.getUniqueId();
         long now = System.currentTimeMillis();
         long newUntil = now + seconds * 1000L;
 
         Long old = protectedUntil.get(uuid);
         if (old == null || old < newUntil) {
             protectedUntil.put(uuid, newUntil);
+        }
+
+        sendMessage(player, startMessage, seconds);
+        playConfiguredSound(player, startSound);
+    }
+
+    private void startTicker() {
+        stopTicker();
+        tickerTaskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, this::tickProtection, 20L, 20L);
+    }
+
+    private void stopTicker() {
+        if (tickerTaskId != -1) {
+            Bukkit.getScheduler().cancelTask(tickerTaskId);
+            tickerTaskId = -1;
+        }
+    }
+
+    private void tickProtection() {
+        if (protectedUntil.isEmpty()) {
+            return;
+        }
+
+        long now = System.currentTimeMillis();
+        Iterator<Map.Entry<UUID, Long>> iterator = protectedUntil.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<UUID, Long> entry = iterator.next();
+            if (entry.getValue() > now) {
+                continue;
+            }
+
+            iterator.remove();
+            Player player = Bukkit.getPlayer(entry.getKey());
+            if (player != null && player.isOnline()) {
+                sendMessage(player, messageProtectionEnd, 0);
+                playConfiguredSound(player, endSound);
+            }
+        }
+    }
+
+    private void onProtectionEnd(Player player) {
+        if (player == null) {
+            return;
+        }
+
+        if (protectedUntil.remove(player.getUniqueId()) != null) {
+            sendMessage(player, messageProtectionEnd, 0);
+            playConfiguredSound(player, endSound);
+        }
+    }
+
+    private void sendMessage(Player player, String raw, int seconds) {
+        if (player == null || raw == null || raw.isBlank()) {
+            return;
+        }
+        player.sendMessage(Utils.colorize(raw.replace("%seconds%", String.valueOf(seconds))));
+    }
+
+    private void playConfiguredSound(Player player, Sound sound) {
+        if (player == null || sound == null) {
+            return;
+        }
+        try {
+            player.playSound(player.getLocation(), sound, 1.0f, 1.0f);
+        } catch (Exception ignored) {
+        }
+    }
+
+    private Sound parseSound(String name, Sound fallback) {
+        if (name == null || name.isBlank()) {
+            return fallback;
+        }
+        try {
+            return Sound.valueOf(name.trim().toUpperCase());
+        } catch (Exception ignored) {
+            return fallback;
         }
     }
 
@@ -201,6 +291,11 @@ public class ProtectionModule {
         config = YamlConfiguration.loadConfiguration(configFile);
         joinProtectionSeconds = Math.max(0, config.getInt("join-protection-seconds", 45));
         spawnProtectionSeconds = Math.max(0, config.getInt("spawn-protection-seconds", 120));
+        messageJoinStart = config.getString("messages.join-start", "&a你已获得加入保护，持续 &e%seconds%&a 秒。");
+        messageSpawnStart = config.getString("messages.spawn-start", "&b你已获得重生保护，持续 &e%seconds%&b 秒。");
+        messageProtectionEnd = config.getString("messages.protection-end", "&e你的保护已结束。");
+        startSound = parseSound(config.getString("sounds.start", "UI_TOAST_IN"), Sound.UI_TOAST_IN);
+        endSound = parseSound(config.getString("sounds.end", "UI_TOAST_CHALLENGE_COMPLETE"), Sound.UI_TOAST_CHALLENGE_COMPLETE);
 
         saveConfig();
     }

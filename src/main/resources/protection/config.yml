@@ -11,3 +11,15 @@ join-protection-seconds: 45
 
 # 玩家重生保护时长（秒）
 spawn-protection-seconds: 120
+
+# 提示消息
+# 可用占位符：%seconds%
+messages:
+	join-start: "&a你已获得加入保护，持续 &e%seconds%&a 秒。"
+	spawn-start: "&b你已获得重生保护，持续 &e%seconds%&b 秒。"
+	protection-end: "&e你的保护已结束。"
+
+# 提示音效（填写 Bukkit Sound 枚举名）
+sounds:
+	start: "UI_TOAST_IN"
+	end: "UI_TOAST_CHALLENGE_COMPLETE"

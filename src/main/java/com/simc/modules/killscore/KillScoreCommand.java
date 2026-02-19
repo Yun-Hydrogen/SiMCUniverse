@@ -202,10 +202,14 @@ public class KillScoreCommand implements CommandExecutor, TabCompleter {
             return online;
         }
 
-        OfflinePlayer offline = Bukkit.getOfflinePlayer(name);
-        if (!offline.hasPlayedBefore() && !offline.isOnline()) {
-            return null;
+        for (OfflinePlayer offline : Bukkit.getOfflinePlayers()) {
+            String offlineName = offline.getName();
+            if (offlineName != null && offlineName.equalsIgnoreCase(name)
+                    && (offline.hasPlayedBefore() || offline.isOnline())) {
+                return offline;
+            }
         }
-        return offline;
+
+        return null;
     }
 }

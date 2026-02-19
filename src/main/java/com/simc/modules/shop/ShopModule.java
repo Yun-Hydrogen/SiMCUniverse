@@ -16,6 +16,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -356,12 +357,12 @@ public class ShopModule {
         for (int i = 1; i <= maxPage; i++) {
             File pageFile = new File(pageFolder, "Page" + i + ".yml");
             if (!pageFile.exists()) {
-                pages.put(i, new ShopPage(i));
+                pages.put(i, new ShopPage());
                 continue;
             }
 
             YamlConfiguration pageCfg = YamlConfiguration.loadConfiguration(pageFile);
-            ShopPage page = new ShopPage(i);
+            ShopPage page = new ShopPage();
             page.title = pageCfg.getString("title", "商店");
             for (int slot = 1; slot <= 27; slot++) {
                 ConfigurationSection section = pageCfg.getConfigurationSection(String.valueOf(slot));
@@ -489,13 +490,24 @@ public class ShopModule {
 
         ItemStack item = new ItemStack(material, clamp(amount, 1, 64));
         if (nbt != null) {
-            try {
-                item = Bukkit.getUnsafe().modifyItemStack(item, nbt);
-            } catch (Exception ignored) {
-                // ignore invalid nbt
-            }
+            item = applyNbtIfPossible(item, nbt);
         }
 
+        return item;
+    }
+
+    private ItemStack applyNbtIfPossible(ItemStack item, String nbt) {
+        try {
+            Method getUnsafeMethod = Bukkit.class.getMethod("getUnsafe");
+            Object unsafe = getUnsafeMethod.invoke(null);
+            Method modifyItemStack = unsafe.getClass().getMethod("modifyItemStack", ItemStack.class, String.class);
+            Object result = modifyItemStack.invoke(unsafe, item, nbt);
+            if (result instanceof ItemStack) {
+                return (ItemStack) result;
+            }
+        } catch (Exception ignored) {
+            // ignore invalid nbt or unsupported runtime
+        }
         return item;
     }
 
@@ -594,13 +606,8 @@ public class ShopModule {
     }
 
     private static class ShopPage {
-        private final int pageIndex;
         private String title = "商店";
         private final Map<Integer, ShopProduct> products = new HashMap<>();
-
-        private ShopPage(int pageIndex) {
-            this.pageIndex = pageIndex;
-        }
     }
 
     private enum ExchangeType {

@@ -76,8 +76,8 @@ public class RandomCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        OfflinePlayer target = Bukkit.getOfflinePlayer(name);
-        if (target == null || (!target.hasPlayedBefore() && !target.isOnline())) {
+        OfflinePlayer target = findPlayer(name);
+        if (target == null) {
             sender.sendMessage("§c未找到玩家: " + name);
             return true;
         }
@@ -136,5 +136,22 @@ public class RandomCommand implements CommandExecutor, TabCompleter {
 
     private boolean equalsIgnoreCase(String a, String b) {
         return a != null && a.equalsIgnoreCase(b);
+    }
+
+    private OfflinePlayer findPlayer(String name) {
+        Player online = Bukkit.getPlayerExact(name);
+        if (online != null) {
+            return online;
+        }
+
+        for (OfflinePlayer offline : Bukkit.getOfflinePlayers()) {
+            String offlineName = offline.getName();
+            if (offlineName != null && offlineName.equalsIgnoreCase(name)
+                    && (offline.hasPlayedBefore() || offline.isOnline())) {
+                return offline;
+            }
+        }
+
+        return null;
     }
 }

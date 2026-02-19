@@ -9,6 +9,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.HandlerList;
+import org.bukkit.scoreboard.Criteria;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
@@ -337,7 +338,7 @@ public class KillScoreModule {
 
         for (Player player : Bukkit.getOnlinePlayers()) {
             Scoreboard scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
-            Objective objective = scoreboard.registerNewObjective("si_killscore", "dummy", "§e" + killScoreName + "§f排行榜");
+            Objective objective = scoreboard.registerNewObjective("si_killscore", Criteria.DUMMY, "§e" + killScoreName + "§f排行榜");
             objective.setDisplaySlot(DisplaySlot.SIDEBAR);
 
             String selfLine = "§7你: §a" + getScore(player.getUniqueId());

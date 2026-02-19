@@ -13,6 +13,7 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerExpChangeEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 
 public class TaskListener implements Listener {
@@ -114,5 +115,10 @@ public class TaskListener implements Listener {
         }
 
         module.onMove(event.getPlayer(), event.getTo());
+    }
+
+    @EventHandler
+    public void onQuit(PlayerQuitEvent event) {
+        module.clearRealtimeProgress(event.getPlayer());
     }
 }

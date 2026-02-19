@@ -31,6 +31,11 @@ type: BREAK
 required:
   "minecraft:stone": 64
 
+# total-required：总数量模式（仅 BREAK/PLACE/INTERACT/KILL/PICKUP/CRAFT 生效）
+# false：按 required 中每一项各自数量完成
+# 正整数：忽略 required 中各项数量，改为统计 required 中目标操作总和达到该值即完成
+total-required: false
+
 # rewards：奖励命令（无需 /），支持 %player% 占位符
 rewards:
   - "tellraw %player% {\"text\":\"任务完成：采石达人\",\"color\":\"gold\"}"

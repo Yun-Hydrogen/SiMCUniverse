@@ -10,6 +10,7 @@ import org.bukkit.Sound;
 import org.bukkit.SoundCategory;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
+import org.bukkit.block.sign.Side;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -573,9 +574,9 @@ public class RandomModule {
                 return;
             }
             Sign sign = (Sign) block.getState();
-            sign.setLine(0, "请签署");
-            sign.setLine(1, "任意内容");
-            sign.setLine(2, "直接确认也可");
+            sign.getSide(Side.FRONT).setLine(0, "请签署");
+            sign.getSide(Side.FRONT).setLine(1, "任意内容");
+            sign.getSide(Side.FRONT).setLine(2, "直接确认也可");
             sign.update(true, false);
             signStates.put(player.getUniqueId(), state);
             try {
@@ -901,10 +902,21 @@ public class RandomModule {
 
         ItemStack item = new ItemStack(mat, Math.max(1, Math.min(64, amount)));
         if (nbt != null) {
-            try {
-                item = Bukkit.getUnsafe().modifyItemStack(item, nbt);
-            } catch (Exception ignored) {
+            item = applyNbtIfPossible(item, nbt);
+        }
+        return item;
+    }
+
+    private ItemStack applyNbtIfPossible(ItemStack item, String nbt) {
+        try {
+            Method getUnsafeMethod = Bukkit.class.getMethod("getUnsafe");
+            Object unsafe = getUnsafeMethod.invoke(null);
+            Method modifyItemStack = unsafe.getClass().getMethod("modifyItemStack", ItemStack.class, String.class);
+            Object result = modifyItemStack.invoke(unsafe, item, nbt);
+            if (result instanceof ItemStack) {
+                return (ItemStack) result;
             }
+        } catch (Exception ignored) {
         }
         return item;
     }
