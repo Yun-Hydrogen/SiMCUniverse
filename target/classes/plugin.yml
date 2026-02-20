@@ -32,6 +32,9 @@ commands:
   si-protection:
     description: Protection module command.
     usage: /<command>
+  si-quickenhance:
+    description: Quickenhance module command.
+    usage: /<command>
 permissions:
   simc.admin:
     description: Allows managing SiMCUniverse.
@@ -56,4 +59,7 @@ permissions:
     default: op
   simc.protection.sudo:
     description: Allows using si-protection sudo commands.
+    default: op
+  simc.quickenhance.sudo:
+    description: Allows using si-quickenhance sudo commands.
     default: op

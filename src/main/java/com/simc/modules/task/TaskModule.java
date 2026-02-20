@@ -128,7 +128,7 @@ public class TaskModule {
         int currentPage = Math.max(1, Math.min(page, totalPages));
 
         Inventory inv = Bukkit.createInventory(new TaskHolder(currentPage), 54,
-                Utils.colorize("&8任务中心 &7[" + currentPage + "/" + totalPages + "]"));
+                Utils.colorize("&8任务中心~ &7[" + currentPage + "/" + totalPages + "]"));
 
         fillBottomBar(inv);
 

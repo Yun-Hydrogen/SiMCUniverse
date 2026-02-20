@@ -6,6 +6,7 @@ import com.simc.modules.checkin.CheckinModule;
 import com.simc.modules.killscore.KillScoreModule;
 import com.simc.modules.livescore.LiveScoreModule;
 import com.simc.modules.protection.ProtectionModule;
+import com.simc.modules.quickenhance.QuickenhanceModule;
 import com.simc.modules.random.RandomModule;
 import com.simc.modules.shop.ShopModule;
 import com.simc.modules.task.TaskModule;
@@ -23,6 +24,7 @@ public class PluginManager {
     private CheckinModule checkinModule;
     private TaskModule taskModule;
     private ProtectionModule protectionModule;
+    private QuickenhanceModule quickenhanceModule;
 
     public PluginManager(SiMCUniverse plugin) {
         this.plugin = plugin;
@@ -56,11 +58,14 @@ public class PluginManager {
         if (protectionModule != null) {
             protectionModule.shutdown();
         }
+        if (quickenhanceModule != null) {
+            quickenhanceModule.shutdown();
+        }
         plugin.getLogger().info("PluginManager shutdown completed.");
     }
 
     private void registerListeners() {
-        plugin.getServer().getPluginManager().registerEvents(new PlayerListener(), plugin);
+        plugin.getServer().getPluginManager().registerEvents(new PlayerListener(plugin), plugin);
     }
 
     private void initializeModules() {
@@ -84,6 +89,9 @@ public class PluginManager {
 
         protectionModule = new ProtectionModule(plugin);
         protectionModule.initialize();
+
+        quickenhanceModule = new QuickenhanceModule(plugin);
+        quickenhanceModule.initialize();
     }
 
     public KillScoreModule getKillScoreModule() {
@@ -114,6 +122,10 @@ public class PluginManager {
         return protectionModule;
     }
 
+    public QuickenhanceModule getQuickenhanceModule() {
+        return quickenhanceModule;
+    }
+
     public Map<String, Boolean> listModuleStatus() {
         Map<String, Boolean> result = new LinkedHashMap<>();
         result.put("killscore", killScoreModule != null && killScoreModule.isEnabled());
@@ -123,6 +135,7 @@ public class PluginManager {
         result.put("checkin", checkinModule != null && checkinModule.isEnabled());
         result.put("task", taskModule != null && taskModule.isEnabled());
         result.put("protection", protectionModule != null && protectionModule.isEnabled());
+        result.put("quickenhance", quickenhanceModule != null && quickenhanceModule.isEnabled());
         return result;
     }
 
@@ -154,6 +167,10 @@ public class PluginManager {
         }
         if ("protection".equals(key) && protectionModule != null) {
             protectionModule.enable();
+            return true;
+        }
+        if ("quickenhance".equals(key) && quickenhanceModule != null) {
+            quickenhanceModule.enable();
             return true;
         }
         return false;
@@ -189,6 +206,10 @@ public class PluginManager {
             protectionModule.disable();
             return true;
         }
+        if ("quickenhance".equals(key) && quickenhanceModule != null) {
+            quickenhanceModule.disable();
+            return true;
+        }
         return false;
     }
 
@@ -222,6 +243,10 @@ public class PluginManager {
             protectionModule.reload();
             return true;
         }
+        if ("quickenhance".equals(key) && quickenhanceModule != null) {
+            quickenhanceModule.reload();
+            return true;
+        }
         return false;
     }
 
@@ -247,6 +272,9 @@ public class PluginManager {
         }
         if (protectionModule != null) {
             protectionModule.reload();
+        }
+        if (quickenhanceModule != null) {
+            quickenhanceModule.reload();
         }
     }
 
