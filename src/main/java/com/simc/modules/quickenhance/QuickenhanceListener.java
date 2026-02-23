@@ -63,10 +63,10 @@ public class QuickenhanceListener implements Listener {
 
         int amount = cursor.getAmount();
         if (amount <= 1) {
-            event.setCursor(new ItemStack(Material.AIR));
+            player.setItemOnCursor(new ItemStack(Material.AIR));
         } else {
             cursor.setAmount(amount - 1);
-            event.setCursor(cursor);
+            player.setItemOnCursor(cursor);
         }
 
         event.setCurrentItem(current);

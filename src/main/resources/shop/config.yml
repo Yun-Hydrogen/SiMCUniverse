@@ -7,6 +7,12 @@
 # 是否注册 /shop 别名（通过监听重定向到 /si-shop）
 register-shop-alias: false
 
+# 快捷打开商店：手持指定物品右键即可打开 shop
+# 默认启用，默认物品为小木棍（minecraft:stick）
+quick-open:
+  enabled: true
+  item: minecraft:stick
+
 # 经济货币来源：killscore 或 livescore
 currency-source: killscore
 
@@ -18,3 +24,4 @@ messages:
   reload-success: "&aShop 配置已重载。"
   reset-confirm: "&e再次输入同样命令以确认重置商店页面（15秒内）。"
   reset-success: "&a商店页面已重置。"
+  quick-open-tip: "&7快捷打开商店：手持 &e%shop_quick_open_item% &7右键"

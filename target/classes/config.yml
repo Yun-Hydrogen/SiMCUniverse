@@ -9,3 +9,5 @@ join-tip:
   messages:
     - "&6[SiMCUniverse] &e欢迎来到服务器！"
     - "&7可用指令：&f/si-checkin &7签到  &f/si-shop &7商店  &f/si-task &7任务  &f/si-random &7抽奖"
+    - "&7 可使用快捷附魔：打开背包，拿起附魔书对着物品右键即可！（不限制等级）"
+    - "&7更多功能敬请期待！"

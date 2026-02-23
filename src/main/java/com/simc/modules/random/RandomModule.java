@@ -70,6 +70,7 @@ public class RandomModule {
     private final Map<UUID, DrawRequest> pendingDraw = new HashMap<>();
     private final Map<UUID, TempSignState> signStates = new HashMap<>();
     private final Map<UUID, BukkitTask> animationTasks = new HashMap<>();
+    private final List<String> invalidPoolEntries = new ArrayList<>();
 
     private RandomCommand command;
     private RandomListener listener;
@@ -151,6 +152,10 @@ public class RandomModule {
         return Utils.colorize(replace(text, null, -1, -1, point));
     }
 
+    public List<String> getInvalidPoolEntries() {
+        return new ArrayList<>(invalidPoolEntries);
+    }
+
     public void openMainGui(Player player) {
         if (!enabled) {
             player.sendMessage(msg("module-disabled"));
@@ -167,7 +172,7 @@ public class RandomModule {
         inv.setItem(15, createButton(Material.YELLOW_STAINED_GLASS_PANE,
                 "&6十连抽",
                 List.of("&7花费: &e" + tenCost + " %shop_currency%",
-                        tenGuaranteeGold ? "&7第十抽必得 &6gold" : "&7无必得设置",
+                tenGuaranteeGold ? "&7第十抽仅在 &6gold &7/ &drainbow &7池抽取" : "&7无必得设置",
                         "&7点击进行十连")));
 
         inv.setItem(13, createButton(Material.BOOK,
@@ -200,6 +205,12 @@ public class RandomModule {
     public void openChanceGui(Player player) {
         Inventory inv = Bukkit.createInventory(new RandomHolder(GuiType.CHANCE, null), 27, Utils.colorize("&8概率查看"));
         fillBorder(inv, Material.BLACK_STAINED_GLASS_PANE);
+
+        inv.setItem(4, createButton(Material.PAPER,
+            "&e十连规则公示",
+            List.of(tenGuaranteeGold
+                ? "&7十连最后一抽：仅在 &6gold &7/ &drainbow &7池抽取"
+                : "&7当前未开启十连保底规则")));
 
         inv.setItem(11, chanceItem(Rarity.BLUE, Material.LIGHT_BLUE_STAINED_GLASS_PANE));
         inv.setItem(13, chanceItem(Rarity.GOLD, Material.YELLOW_STAINED_GLASS_PANE));
@@ -415,7 +426,7 @@ public class RandomModule {
         List<DrawResult> results = new ArrayList<>();
         for (int i = 0; i < request.count; i++) {
             if (request.count == 10 && tenGuaranteeGold && i == 9) {
-                results.add(drawOneGuaranteedGold());
+                results.add(drawOneGuaranteedHighRarity());
             } else {
                 results.add(drawOne());
             }
@@ -435,9 +446,33 @@ public class RandomModule {
         return new DrawResult(rarity, reward);
     }
 
-    private DrawResult drawOneGuaranteedGold() {
-        RewardItem reward = randomRewardFrom(Rarity.GOLD);
-        return new DrawResult(Rarity.GOLD, reward);
+    private DrawResult drawOneGuaranteedHighRarity() {
+        double goldChance = rarityChance.getOrDefault(Rarity.GOLD, Rarity.GOLD.defaultChance);
+        double rainbowChance = rarityChance.getOrDefault(Rarity.RAINBOW, Rarity.RAINBOW.defaultChance);
+        double sum = Math.max(0D, goldChance) + Math.max(0D, rainbowChance);
+
+        boolean goldEmpty = pools.getOrDefault(Rarity.GOLD, Collections.emptyList()).isEmpty();
+        boolean rainbowEmpty = pools.getOrDefault(Rarity.RAINBOW, Collections.emptyList()).isEmpty();
+
+        if (goldEmpty && rainbowEmpty) {
+            return drawOne();
+        }
+        if (goldEmpty) {
+            return new DrawResult(Rarity.RAINBOW, randomRewardFrom(Rarity.RAINBOW));
+        }
+        if (rainbowEmpty) {
+            return new DrawResult(Rarity.GOLD, randomRewardFrom(Rarity.GOLD));
+        }
+
+        if (sum <= 0D) {
+            boolean chooseGold = ThreadLocalRandom.current().nextBoolean();
+            Rarity rarity = chooseGold ? Rarity.GOLD : Rarity.RAINBOW;
+            return new DrawResult(rarity, randomRewardFrom(rarity));
+        }
+
+        double r = ThreadLocalRandom.current().nextDouble(sum);
+        Rarity rarity = r < goldChance ? Rarity.GOLD : Rarity.RAINBOW;
+        return new DrawResult(rarity, randomRewardFrom(rarity));
     }
 
     private Rarity chooseRarity() {
@@ -704,6 +739,7 @@ public class RandomModule {
     }
 
     private void loadPools() {
+        invalidPoolEntries.clear();
         for (Rarity rarity : Rarity.values()) {
             pools.get(rarity).clear();
         }
@@ -720,13 +756,54 @@ public class RandomModule {
                     Object raw = items.get(key);
                     Integer amount = raw instanceof Number ? ((Number) raw).intValue() : parseInt(String.valueOf(raw));
                     if (amount != null && amount > 0) {
+                        String invalidReason = validateItemSpec(key);
+                        if (invalidReason != null) {
+                            invalidPoolEntries.add(rarity.fileName + " -> items." + key + " : " + invalidReason);
+                        }
                         pools.get(rarity).add(new RewardItem(key, amount));
                     }
                 }
             }
         }
 
+        if (!invalidPoolEntries.isEmpty()) {
+            plugin.getLogger().warning("Random pool has invalid item specs: " + invalidPoolEntries.size());
+            for (String line : invalidPoolEntries) {
+                plugin.getLogger().warning(" - " + line);
+            }
+        }
+
         normalizeChances();
+    }
+
+    private String validateItemSpec(String spec) {
+        if (spec == null || spec.isBlank()) {
+            return "empty spec";
+        }
+
+        String trimmed = spec.trim();
+        String base = trimmed;
+        String nbt = null;
+
+        int idx = trimmed.indexOf('{');
+        if (idx > 0 && trimmed.endsWith("}")) {
+            base = trimmed.substring(0, idx);
+            nbt = trimmed.substring(idx);
+        }
+
+        Material mat = Material.matchMaterial(base);
+        if (mat == null) {
+            return "invalid material '" + base + "'";
+        }
+
+        if (nbt != null) {
+            ItemStack test = new ItemStack(mat, 1);
+            if (!applyNbtIfPossible(test, nbt).success) {
+                return "invalid NBT '" + nbt + "'";
+            }
+        }
+
+        return null;
     }
 
     private void normalizeChances() {
@@ -902,23 +979,23 @@ public class RandomModule {
 
         ItemStack item = new ItemStack(mat, Math.max(1, Math.min(64, amount)));
         if (nbt != null) {
-            item = applyNbtIfPossible(item, nbt);
+            item = applyNbtIfPossible(item, nbt).item;
         }
         return item;
     }
 
-    private ItemStack applyNbtIfPossible(ItemStack item, String nbt) {
+    private NbtApplyResult applyNbtIfPossible(ItemStack item, String nbt) {
         try {
             Method getUnsafeMethod = Bukkit.class.getMethod("getUnsafe");
             Object unsafe = getUnsafeMethod.invoke(null);
             Method modifyItemStack = unsafe.getClass().getMethod("modifyItemStack", ItemStack.class, String.class);
             Object result = modifyItemStack.invoke(unsafe, item, nbt);
             if (result instanceof ItemStack) {
-                return (ItemStack) result;
+                return new NbtApplyResult((ItemStack) result, true);
             }
         } catch (Exception ignored) {
         }
-        return item;
+        return new NbtApplyResult(item, false);
     }
 
     private String msg(String key) {
@@ -1039,7 +1116,7 @@ public class RandomModule {
         PITY_SELECT
     }
 
-    private static class RewardItem {
+    private class RewardItem {
         private final String itemSpec;
         private final int amount;
 
@@ -1049,11 +1126,17 @@ public class RandomModule {
         }
 
         private ItemStack toDisplayItem() {
-            Material material = Material.matchMaterial(itemSpec.contains("{") ? itemSpec.substring(0, itemSpec.indexOf('{')) : itemSpec);
-            if (material == null) {
-                material = Material.STONE;
-            }
-            return new ItemStack(material, Math.max(1, Math.min(64, amount)));
+            return parseItemSpec(itemSpec, amount);
+        }
+    }
+
+    private static class NbtApplyResult {
+        private final ItemStack item;
+        private final boolean success;
+
+        private NbtApplyResult(ItemStack item, boolean success) {
+            this.item = item;
+            this.success = success;
         }
     }
 

@@ -8,8 +8,11 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerResourcePackStatusEvent;
 import org.bukkit.event.block.SignChangeEvent;
+
+import java.util.List;
 
 public class RandomListener implements Listener {
     private final RandomModule module;
@@ -87,5 +90,23 @@ public class RandomListener implements Listener {
     @EventHandler
     public void onResourcePackStatus(PlayerResourcePackStatusEvent event) {
         module.handleResourcePackStatus(event.getPlayer(), event.getStatus().name());
+    }
+
+    @EventHandler
+    public void onJoin(PlayerJoinEvent event) {
+        Player player = event.getPlayer();
+        if (!player.isOp()) {
+            return;
+        }
+
+        List<String> invalid = module.getInvalidPoolEntries();
+        if (invalid.isEmpty()) {
+            return;
+        }
+
+        player.sendMessage("§c[SiMCUniverse] Random 抽奖池数据有误（" + invalid.size() + " 项）：");
+        for (String line : invalid) {
+            player.sendMessage("§7- §e" + line);
+        }
     }
 }

@@ -1,13 +1,13 @@
 main: com.simc.SiMCUniverse
-version: 1.0.0-SNAPSHOT
+version: 1.0.3-dev
 name: SiMCUniverse
 author: YunHydrogen
 api-version: 1.20
-description: A modular Spigot plugin framework for SiMCUniverse.
+description: SiMCUniverse 是一个 Minecraft 服务器插件，提供多种功能模块，如击杀分、存活分、抽奖（仿BA）、任务系统、签到系统等，原用于 RisingLight 和 惠州一中智能信息社MC服务器线上活动，现开源供社区使用和二次开发。
 prefix: SiMCUniverse
 commands:
   simcuniverse:
-    description: SiMCUniverse main command.
+    description: SiMCUniverse 主命令。
     usage: /<command> sudo <help|list|disable|enable|reload|version>
     aliases: [simc]
     permission: simc.admin

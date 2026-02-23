@@ -39,6 +39,9 @@ public class ShopModule {
     private YamlConfiguration config;
 
     private boolean aliasShopEnabled;
+    private boolean quickOpenEnabled;
+    private Material quickOpenMaterial;
+    private String quickOpenItemId;
     private String currencySource;
 
     private Map<String, String> messages = new HashMap<>();
@@ -99,6 +102,21 @@ public class ShopModule {
 
     public boolean isAliasShopEnabled() {
         return aliasShopEnabled;
+    }
+
+    public boolean isQuickOpenEnabled() {
+        return quickOpenEnabled;
+    }
+
+    public String getQuickOpenJoinTip() {
+        return Utils.colorize(replacePlaceholders(messages.getOrDefault("quick-open-tip", ""), -1, -1, null));
+    }
+
+    public boolean isQuickOpenTriggerItem(ItemStack item) {
+        return item != null
+                && item.getType() != Material.AIR
+                && quickOpenMaterial != null
+                && item.getType() == quickOpenMaterial;
     }
 
     public void openShop(Player player, int page) {
@@ -326,8 +344,31 @@ public class ShopModule {
         }
 
         config = YamlConfiguration.loadConfiguration(configFile);
+
+        if (!config.contains("quick-open.enabled")) {
+            config.set("quick-open.enabled", true);
+        }
+        if (!config.contains("quick-open.item")) {
+            config.set("quick-open.item", "minecraft:stick");
+        }
+        if (!config.contains("messages.quick-open-tip")) {
+            config.set("messages.quick-open-tip", "&7快捷打开商店：手持 &e%shop_quick_open_item% &7右键");
+        }
+
         aliasShopEnabled = config.getBoolean("register-shop-alias", false);
         currencySource = config.getString("currency-source", "killscore").toLowerCase(Locale.ROOT);
+        quickOpenEnabled = config.getBoolean("quick-open.enabled", true);
+
+        String quickOpenItemRaw = config.getString("quick-open.item", "minecraft:stick");
+        Material resolvedQuickOpenMaterial = Material.matchMaterial(quickOpenItemRaw == null ? "minecraft:stick" : quickOpenItemRaw);
+        if (resolvedQuickOpenMaterial == null || resolvedQuickOpenMaterial == Material.AIR) {
+            plugin.getLogger().warning("Invalid shop quick-open item in config: " + quickOpenItemRaw + ", fallback to minecraft:stick");
+            resolvedQuickOpenMaterial = Material.STICK;
+            config.set("quick-open.item", "minecraft:stick");
+            quickOpenItemRaw = "minecraft:stick";
+        }
+        quickOpenMaterial = resolvedQuickOpenMaterial;
+        quickOpenItemId = normalizeQuickOpenItemId(quickOpenItemRaw);
 
         messages.clear();
         messages.put("module-disabled", config.getString("messages.module-disabled", "&cShop 模块已禁用。"));
@@ -337,6 +378,7 @@ public class ShopModule {
         messages.put("reload-success", config.getString("messages.reload-success", "&aShop 配置已重载。"));
         messages.put("reset-confirm", config.getString("messages.reset-confirm", "&e再次输入同样命令以确认重置商店页面（15秒内）。"));
         messages.put("reset-success", config.getString("messages.reset-success", "&a商店页面已重置。"));
+        messages.put("quick-open-tip", config.getString("messages.quick-open-tip", "&7快捷打开商店：手持 &e%shop_quick_open_item% &7右键"));
 
         loadPages();
         saveConfigFile();
@@ -532,7 +574,20 @@ public class ShopModule {
         if (player != null) {
             result = result.replace("%player%", player.getName());
         }
+        result = result.replace("%shop_quick_open_item%", quickOpenItemId == null ? "minecraft:stick" : quickOpenItemId);
         return result;
+    }
+
+    private String normalizeQuickOpenItemId(String value) {
+        if (value == null || value.isBlank()) {
+            return "minecraft:stick";
+        }
+
+        String trimmed = value.trim().toLowerCase(Locale.ROOT);
+        if (!trimmed.contains(":")) {
+            trimmed = "minecraft:" + trimmed;
+        }
+        return trimmed;
     }
 
     private String getCurrencyDisplayName() {

@@ -12,7 +12,7 @@ draw-cost:
   # 十连抽消耗
   ten: 90
 
-# 十连抽是否保底至少获得一件gold等级以上的物品（九蓝一金）
+# 十连抽规则：最后一抽仅在 gold/rainbow 两个池中抽取 （九蓝一金）
 draw:
   ten-guarantee-gold: true
 

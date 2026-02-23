@@ -2,7 +2,6 @@ package com.simc.modules.quickenhance;
 
 import com.simc.SiMCUniverse;
 import com.simc.utils.Utils;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.enchantments.Enchantment;
