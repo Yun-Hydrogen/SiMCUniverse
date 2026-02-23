@@ -149,3 +149,6 @@ mvn clean package
 - 插件部分设计及部分示例配置文件采用了 **Blue Archive** 中的一些名词或者设计元素，在此感谢。
 
 - **感谢 点亮Star🌟/支持本项目开发 的你！**
+
+## 许可证
+[详见LICENSE文件](/LICENSE)
