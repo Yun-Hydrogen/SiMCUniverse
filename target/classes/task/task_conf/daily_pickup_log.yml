@@ -8,6 +8,9 @@ id: daily_pickup_log
 icon: "minecraft:oak_log"
 type: PICKUP
 
+# 进度提示频率：every | percent-10 | percent-20 | never
+progress-notify: every
+
 required:
   "minecraft:oak_log": 48
 

@@ -8,6 +8,9 @@ id: daily_place_dirt
 icon: "minecraft:dirt"
 type: PLACE
 
+# 进度提示频率：every | percent-10 | percent-20 | never
+progress-notify: every
+
 # required 为键值结构：<名字空间(可附带NBT)>: <数量>
 required:
   "minecraft:dirt": 32

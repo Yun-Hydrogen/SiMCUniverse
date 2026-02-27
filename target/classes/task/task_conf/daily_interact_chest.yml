@@ -8,6 +8,9 @@ id: daily_interact_chest
 icon: "minecraft:chest"
 type: INTERACT
 
+# 进度提示频率：every | percent-10 | percent-20 | never
+progress-notify: every
+
 required:
   "minecraft:chest": 20
 

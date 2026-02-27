@@ -25,6 +25,9 @@ icon: "minecraft:stone"
 # BREAK / PLACE / INTERACT / KILL / GAIN_XP / POSITION / PICKUP / CRAFT
 type: BREAK
 
+# 进度提示频率：every | percent-10 | percent-20 | never
+progress-notify: every
+
 # required：需求
 # 对于 BREAK/PLACE/INTERACT/KILL/PICKUP/CRAFT：
 # 使用键值对，键为目标名字空间（可附加 NBT 字符串），值为数量

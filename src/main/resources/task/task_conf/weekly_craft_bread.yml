@@ -8,6 +8,9 @@ id: weekly_craft_bread
 icon: "minecraft:bread"
 type: CRAFT
 
+# 进度提示频率：every | percent-10 | percent-20 | never
+progress-notify: percent-20
+
 required:
   "minecraft:bread": 24
 

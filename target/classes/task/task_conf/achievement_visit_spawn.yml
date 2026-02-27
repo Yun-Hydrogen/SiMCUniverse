@@ -8,6 +8,9 @@ id: achievement_visit_spawn
 icon: "minecraft:compass"
 type: POSITION
 
+# 进度提示频率：every | percent-10 | percent-20 | never
+progress-notify: never
+
 # POSITION 的 required 可写为坐标+半径字符串：(x,y,z,radius)
 required: "(0,64,0,20)"
 

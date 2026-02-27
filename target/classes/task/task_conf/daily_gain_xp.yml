@@ -8,6 +8,9 @@ id: daily_gain_xp
 icon: "minecraft:experience_bottle"
 type: GAIN_XP
 
+# 进度提示频率：every | percent-10 | percent-20 | never
+progress-notify: percent-10
+
 # GAIN_XP 的 required 为数值
 required: 120
 

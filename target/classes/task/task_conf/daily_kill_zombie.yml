@@ -8,6 +8,9 @@ id: daily_kill_zombie
 icon: "minecraft:iron_sword"
 type: KILL
 
+# 进度提示频率：every | percent-10 | percent-20 | never
+progress-notify: every
+
 required:
   "minecraft:zombie": 12
 

@@ -31,14 +31,17 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.time.temporal.WeekFields;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Random;
 import java.util.UUID;
 
 public class TaskModule {
@@ -58,8 +61,22 @@ public class TaskModule {
     private final Map<String, String> messages = new HashMap<>();
     private final Map<String, TaskDefinition> tasks = new LinkedHashMap<>();
     private final Map<UUID, Map<String, TaskProgress>> playerProgress = new HashMap<>();
-    private final Map<UUID, BossBar> realtimeBossBars = new HashMap<>();
-    private final Map<UUID, BukkitTask> realtimeBossBarHideTasks = new HashMap<>();
+        private final Map<UUID, List<ActiveBossBar>> realtimeBossBars = new HashMap<>();
+        private final Map<UUID, Deque<BossBarNotice>> realtimeBossBarQueues = new HashMap<>();
+
+        private static final int MAX_CONCURRENT_BOSS_BARS = 3;
+        private static final long BOSS_BAR_SHOW_TICKS = 30L; // 1.5s
+        private static final BarColor[] BOSS_BAR_COLORS = new BarColor[]{
+            BarColor.BLUE,
+            BarColor.GREEN,
+            BarColor.PINK,
+            BarColor.PURPLE,
+            BarColor.RED,
+            BarColor.WHITE,
+            BarColor.YELLOW
+        };
+
+        private final Random colorRandom = new Random();
 
     private LocalTime dailyResetTime = LocalTime.MIDNIGHT;
     private DayOfWeek weeklyResetDay = DayOfWeek.MONDAY;
@@ -249,7 +266,7 @@ public class TaskModule {
             if (progress.value >= task.requiredValue) {
                 completeTask(player, task, progress);
             } else {
-                updateRealtimeBossBar(player, task, progress);
+                enqueueRealtimeBossBar(player, task, progress);
             }
         }
 
@@ -340,7 +357,7 @@ public class TaskModule {
             if (isMapTaskDone(task, progress)) {
                 completeTask(player, task, progress);
             } else if (matched) {
-                updateRealtimeBossBar(player, task, progress);
+                enqueueRealtimeBossBar(player, task, progress);
             }
         }
 
@@ -374,7 +391,7 @@ public class TaskModule {
             Bukkit.dispatchCommand(Bukkit.getConsoleSender(), finalCmd);
         }
 
-        clearRealtimeBossBar(player.getUniqueId());
+        clearRealtimeBossBar(player.getUniqueId(), task.id);
 
         player.sendMessage(format("task-complete", task));
         sendToast(player, task);
@@ -388,7 +405,7 @@ public class TaskModule {
         clearRealtimeBossBar(player.getUniqueId());
     }
 
-    private void updateRealtimeBossBar(Player player, TaskDefinition task, TaskProgress progress) {
+    private void enqueueRealtimeBossBar(Player player, TaskDefinition task, TaskProgress progress) {
         if (player == null || task == null || progress == null || progress.completed) {
             return;
         }
@@ -402,31 +419,118 @@ public class TaskModule {
             return;
         }
 
-        double ratio = Math.max(0D, Math.min(1D, (double) current / (double) target));
-        String title = Utils.colorize(task.title) + " &7进度(&f" + current + "&7/&f" + target + "&7)";
-
-        BossBar bar = realtimeBossBars.computeIfAbsent(player.getUniqueId(), uuid -> {
-            BossBar created = Bukkit.createBossBar("", BarColor.BLUE, BarStyle.SOLID);
-            created.addPlayer(player);
-            created.setVisible(true);
-            return created;
-        });
-
-        if (!bar.getPlayers().contains(player)) {
-            bar.addPlayer(player);
+        if (!shouldNotifyProgress(task, progress, current, target)) {
+            return;
         }
-        bar.setTitle(Utils.colorize(title));
-        bar.setProgress(ratio);
+
+        double ratio = Math.max(0D, Math.min(1D, (double) current / (double) target));
+        String title = Utils.colorize(task.title + " &7进度(&f" + current + "&7/&f" + target + "&7)");
+
+        UUID uuid = player.getUniqueId();
+        List<ActiveBossBar> activeBars = realtimeBossBars.computeIfAbsent(uuid, k -> new ArrayList<>());
+        for (ActiveBossBar active : activeBars) {
+            if (!active.taskId.equals(task.id)) {
+                continue;
+            }
+
+            active.bar.setTitle(title);
+            active.bar.setProgress(ratio);
+            active.bar.setColor(task.bossBarColor);
+            active.bar.setVisible(true);
+
+            if (active.hideTask != null) {
+                active.hideTask.cancel();
+            }
+            active.hideTask = Bukkit.getScheduler().runTaskLater(plugin,
+                    () -> hideActiveBossBar(uuid, task.id, active.bar), BOSS_BAR_SHOW_TICKS);
+            return;
+        }
+
+        BossBarNotice notice = new BossBarNotice(task.id, title, ratio, task.bossBarColor);
+        if (activeBars.size() < MAX_CONCURRENT_BOSS_BARS) {
+            showBossBarNotice(player, uuid, notice);
+            return;
+        }
+
+        Deque<BossBarNotice> queue = realtimeBossBarQueues.computeIfAbsent(uuid, k -> new ArrayDeque<>());
+        queue.removeIf(item -> item.taskId.equals(task.id));
+        queue.addLast(notice);
+    }
+
+    private boolean shouldNotifyProgress(TaskDefinition task, TaskProgress progress, int current, int target) {
+        if (task.progressNotifyMode == ProgressNotifyMode.NEVER) {
+            return false;
+        }
+        if (task.progressNotifyMode == ProgressNotifyMode.EVERY) {
+            return true;
+        }
+
+        int stepPercent = task.progressNotifyMode == ProgressNotifyMode.PERCENT_20 ? 20 : 10;
+        int reachedStep = Math.min(100, (int) Math.floor((double) current * 100D / (double) target)) / stepPercent;
+        if (reachedStep <= 0) {
+            return false;
+        }
+
+        if (reachedStep > progress.lastNotifyStep) {
+            progress.lastNotifyStep = reachedStep;
+            return true;
+        }
+
+        return false;
+    }
+
+    private void showBossBarNotice(Player player, UUID uuid, BossBarNotice notice) {
+        BossBar bar = Bukkit.createBossBar("", notice.color, BarStyle.SOLID);
+        bar.addPlayer(player);
+        bar.setTitle(notice.title);
+        bar.setProgress(notice.progress);
         bar.setVisible(true);
 
-        BukkitTask oldHideTask = realtimeBossBarHideTasks.remove(player.getUniqueId());
-        if (oldHideTask != null) {
-            oldHideTask.cancel();
+        ActiveBossBar active = new ActiveBossBar(notice.taskId, bar);
+        active.hideTask = Bukkit.getScheduler().runTaskLater(plugin,
+                () -> hideActiveBossBar(uuid, notice.taskId, bar), BOSS_BAR_SHOW_TICKS);
+        realtimeBossBars.computeIfAbsent(uuid, k -> new ArrayList<>()).add(active);
+    }
+
+    private void hideActiveBossBar(UUID uuid, String taskId, BossBar bar) {
+        List<ActiveBossBar> activeBars = realtimeBossBars.get(uuid);
+        if (activeBars != null) {
+            activeBars.removeIf(active -> active.taskId.equals(taskId) && active.bar == bar);
+            if (activeBars.isEmpty()) {
+                realtimeBossBars.remove(uuid);
+            }
         }
 
-        BukkitTask hideTask = Bukkit.getScheduler().runTaskLater(plugin,
-                () -> clearRealtimeBossBar(player.getUniqueId()), 100L);
-        realtimeBossBarHideTasks.put(player.getUniqueId(), hideTask);
+        bar.removeAll();
+        bar.setVisible(false);
+        flushBossBarQueue(uuid);
+    }
+
+    private void flushBossBarQueue(UUID uuid) {
+        Player player = Bukkit.getPlayer(uuid);
+        if (player == null || !player.isOnline()) {
+            realtimeBossBarQueues.remove(uuid);
+            return;
+        }
+
+        List<ActiveBossBar> activeBars = realtimeBossBars.computeIfAbsent(uuid, k -> new ArrayList<>());
+        Deque<BossBarNotice> queue = realtimeBossBarQueues.get(uuid);
+        if (queue == null || queue.isEmpty()) {
+            return;
+        }
+
+        while (activeBars.size() < MAX_CONCURRENT_BOSS_BARS && !queue.isEmpty()) {
+            BossBarNotice notice = queue.pollFirst();
+            if (notice == null) {
+                break;
+            }
+            showBossBarNotice(player, uuid, notice);
+            activeBars = realtimeBossBars.computeIfAbsent(uuid, k -> new ArrayList<>());
+        }
+
+        if (queue.isEmpty()) {
+            realtimeBossBarQueues.remove(uuid);
+        }
     }
 
     private boolean isRealtimeTaskType(TaskType type) {
@@ -470,22 +574,64 @@ public class TaskModule {
     }
 
     private void clearAllRealtimeBossBars() {
-        for (UUID uuid : new ArrayList<>(realtimeBossBars.keySet())) {
+        List<UUID> keys = new ArrayList<>(realtimeBossBars.keySet());
+        for (UUID uuid : realtimeBossBarQueues.keySet()) {
+            if (!keys.contains(uuid)) {
+                keys.add(uuid);
+            }
+        }
+        for (UUID uuid : keys) {
             clearRealtimeBossBar(uuid);
         }
     }
 
     private void clearRealtimeBossBar(UUID uuid) {
-        BukkitTask task = realtimeBossBarHideTasks.remove(uuid);
-        if (task != null) {
-            task.cancel();
+        List<ActiveBossBar> bars = realtimeBossBars.remove(uuid);
+        if (bars != null) {
+            for (ActiveBossBar active : bars) {
+                if (active.hideTask != null) {
+                    active.hideTask.cancel();
+                }
+                active.bar.removeAll();
+                active.bar.setVisible(false);
+            }
+        }
+        realtimeBossBarQueues.remove(uuid);
+    }
+
+    private void clearRealtimeBossBar(UUID uuid, String taskId) {
+        if (taskId == null || taskId.isBlank()) {
+            clearRealtimeBossBar(uuid);
+            return;
         }
 
-        BossBar bar = realtimeBossBars.remove(uuid);
-        if (bar != null) {
-            bar.removeAll();
-            bar.setVisible(false);
+        List<ActiveBossBar> bars = realtimeBossBars.get(uuid);
+        if (bars != null) {
+            bars.removeIf(active -> {
+                if (!active.taskId.equals(taskId)) {
+                    return false;
+                }
+                if (active.hideTask != null) {
+                    active.hideTask.cancel();
+                }
+                active.bar.removeAll();
+                active.bar.setVisible(false);
+                return true;
+            });
+            if (bars.isEmpty()) {
+                realtimeBossBars.remove(uuid);
+            }
         }
+
+        Deque<BossBarNotice> queue = realtimeBossBarQueues.get(uuid);
+        if (queue != null) {
+            queue.removeIf(notice -> notice.taskId.equals(taskId));
+            if (queue.isEmpty()) {
+                realtimeBossBarQueues.remove(uuid);
+            }
+        }
+
+        flushBossBarQueue(uuid);
     }
 
     private TaskProgress getFreshProgress(UUID uuid, TaskDefinition task) {
@@ -497,6 +643,7 @@ public class TaskModule {
             progress.periodKey = period;
             progress.completed = false;
             progress.value = 0;
+            progress.lastNotifyStep = 0;
             progress.entries.clear();
         }
 
@@ -764,6 +911,32 @@ public class TaskModule {
         }
     }
 
+    private BarColor randomBossBarColor() {
+        return BOSS_BAR_COLORS[colorRandom.nextInt(BOSS_BAR_COLORS.length)];
+    }
+
+    private ProgressNotifyMode parseProgressNotifyMode(String raw) {
+        return ProgressNotifyMode.from(raw);
+    }
+
+    private void ensureTaskNotifyDefaults(YamlConfiguration yml, File file) {
+        boolean changed = false;
+        if (!yml.contains("progress-notify")) {
+            yml.set("progress-notify", "every");
+            changed = true;
+        }
+
+        if (!changed) {
+            return;
+        }
+
+        try {
+            yml.save(file);
+        } catch (IOException e) {
+            plugin.getLogger().warning("Failed to patch task config " + file.getName() + ": " + e.getMessage());
+        }
+    }
+
     private void loadTasks() {
         tasks.clear();
 
@@ -777,6 +950,7 @@ public class TaskModule {
 
         for (File file : sorted) {
             YamlConfiguration yml = YamlConfiguration.loadConfiguration(file);
+            ensureTaskNotifyDefaults(yml, file);
             TaskDefinition task = parseTask(yml, file.getName());
             if (task != null) {
                 tasks.put(task.id, task);
@@ -799,6 +973,8 @@ public class TaskModule {
         task.category = TaskCategory.from(yml.getString("category", "daily"));
         task.type = TaskType.from(yml.getString("type", "BREAK"));
         task.rewards = yml.getStringList("rewards");
+        task.bossBarColor = randomBossBarColor();
+        task.progressNotifyMode = parseProgressNotifyMode(yml.getString("progress-notify", "every"));
 
         if (task.type == TaskType.GAIN_XP) {
             task.requiredValue = Math.max(1, yml.getInt("required", 1));
@@ -973,6 +1149,7 @@ public class TaskModule {
                     progress.completed = entry.getBoolean("completed", false);
                     progress.periodKey = entry.getString("period", "");
                     progress.value = Math.max(0, entry.getInt("value", 0));
+                    progress.lastNotifyStep = Math.max(0, entry.getInt("last-notify-step", 0));
 
                     ConfigurationSection detail = entry.getConfigurationSection("entries");
                     if (detail != null) {
@@ -1014,6 +1191,7 @@ public class TaskModule {
                 data.set(path + ".completed", progress.completed);
                 data.set(path + ".period", progress.periodKey);
                 data.set(path + ".value", progress.value);
+                data.set(path + ".last-notify-step", progress.lastNotifyStep);
                 data.set(path + ".entries", null);
                 for (Map.Entry<String, Integer> detail : progress.entries.entrySet()) {
                     data.set(path + ".entries." + detail.getKey(), detail.getValue());
@@ -1121,6 +1299,8 @@ public class TaskModule {
         private int requiredValue = 1;
         private PositionRequirement position;
         private List<String> rewards = new ArrayList<>();
+        private BarColor bossBarColor = BarColor.BLUE;
+        private ProgressNotifyMode progressNotifyMode = ProgressNotifyMode.EVERY;
     }
 
     public static class PositionRequirement {
@@ -1141,6 +1321,53 @@ public class TaskModule {
         private boolean completed;
         private String periodKey;
         private int value;
+        private int lastNotifyStep;
         private final Map<String, Integer> entries = new HashMap<>();
+    }
+
+    public enum ProgressNotifyMode {
+        EVERY,
+        PERCENT_10,
+        PERCENT_20,
+        NEVER;
+
+        public static ProgressNotifyMode from(String raw) {
+            String value = raw == null ? "every" : raw.trim().toLowerCase(Locale.ROOT);
+            if ("percent-10".equals(value) || "percent_10".equals(value) || "p10".equals(value)) {
+                return PERCENT_10;
+            }
+            if ("percent-20".equals(value) || "percent_20".equals(value) || "p20".equals(value)) {
+                return PERCENT_20;
+            }
+            if ("never".equals(value) || "off".equals(value) || "none".equals(value)) {
+                return NEVER;
+            }
+            return EVERY;
+        }
+    }
+
+    private static class BossBarNotice {
+        private final String taskId;
+        private final String title;
+        private final double progress;
+        private final BarColor color;
+
+        private BossBarNotice(String taskId, String title, double progress, BarColor color) {
+            this.taskId = taskId;
+            this.title = title;
+            this.progress = progress;
+            this.color = color;
+        }
+    }
+
+    private static class ActiveBossBar {
+        private final String taskId;
+        private final BossBar bar;
+        private BukkitTask hideTask;
+
+        private ActiveBossBar(String taskId, BossBar bar) {
+            this.taskId = taskId;
+            this.bar = bar;
+        }
     }
 }
