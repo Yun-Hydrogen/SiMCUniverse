@@ -3,6 +3,7 @@ package com.simc.managers;
 import com.simc.SiMCUniverse;
 import com.simc.listeners.PlayerListener;
 import com.simc.modules.checkin.CheckinModule;
+import com.simc.modules.game.GameModule;
 import com.simc.modules.killscore.KillScoreModule;
 import com.simc.modules.livescore.LiveScoreModule;
 import com.simc.modules.protection.ProtectionModule;
@@ -25,6 +26,7 @@ public class PluginManager {
     private TaskModule taskModule;
     private ProtectionModule protectionModule;
     private QuickenhanceModule quickenhanceModule;
+    private GameModule gameModule;
 
     public PluginManager(SiMCUniverse plugin) {
         this.plugin = plugin;
@@ -61,6 +63,9 @@ public class PluginManager {
         if (quickenhanceModule != null) {
             quickenhanceModule.shutdown();
         }
+        if (gameModule != null) {
+            gameModule.shutdown();
+        }
         plugin.getLogger().info("PluginManager shutdown completed.");
     }
 
@@ -92,6 +97,9 @@ public class PluginManager {
 
         quickenhanceModule = new QuickenhanceModule(plugin);
         quickenhanceModule.initialize();
+
+        gameModule = new GameModule(plugin);
+        gameModule.initialize();
     }
 
     public KillScoreModule getKillScoreModule() {
@@ -126,6 +134,10 @@ public class PluginManager {
         return quickenhanceModule;
     }
 
+    public GameModule getGameModule() {
+        return gameModule;
+    }
+
     public Map<String, Boolean> listModuleStatus() {
         Map<String, Boolean> result = new LinkedHashMap<>();
         result.put("killscore", killScoreModule != null && killScoreModule.isEnabled());
@@ -136,6 +148,7 @@ public class PluginManager {
         result.put("task", taskModule != null && taskModule.isEnabled());
         result.put("protection", protectionModule != null && protectionModule.isEnabled());
         result.put("quickenhance", quickenhanceModule != null && quickenhanceModule.isEnabled());
+        result.put("game", gameModule != null && gameModule.isEnabled());
         return result;
     }
 
@@ -171,6 +184,10 @@ public class PluginManager {
         }
         if ("quickenhance".equals(key) && quickenhanceModule != null) {
             quickenhanceModule.enable();
+            return true;
+        }
+        if ("game".equals(key) && gameModule != null) {
+            gameModule.enable();
             return true;
         }
         return false;
@@ -210,6 +227,10 @@ public class PluginManager {
             quickenhanceModule.disable();
             return true;
         }
+        if ("game".equals(key) && gameModule != null) {
+            gameModule.disable();
+            return true;
+        }
         return false;
     }
 
@@ -247,6 +268,10 @@ public class PluginManager {
             quickenhanceModule.reload();
             return true;
         }
+        if ("game".equals(key) && gameModule != null) {
+            gameModule.reload();
+            return true;
+        }
         return false;
     }
 
@@ -275,6 +300,9 @@ public class PluginManager {
         }
         if (quickenhanceModule != null) {
             quickenhanceModule.reload();
+        }
+        if (gameModule != null) {
+            gameModule.reload();
         }
     }
 

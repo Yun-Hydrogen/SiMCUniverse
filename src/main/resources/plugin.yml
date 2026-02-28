@@ -1,5 +1,5 @@
 main: com.simc.SiMCUniverse
-version: 1.0.4-dev
+version: 2.1-dev
 name: SiMCUniverse
 author: YunHydrogen
 api-version: 1.20
@@ -35,6 +35,9 @@ commands:
   si-quickenhance:
     description: Quickenhance module command.
     usage: /<command>
+  si-game:
+    description: Game module command.
+    usage: /<command>
 permissions:
   simc.admin:
     description: Allows managing SiMCUniverse.
@@ -62,4 +65,7 @@ permissions:
     default: op
   simc.quickenhance.sudo:
     description: Allows using si-quickenhance sudo commands.
+    default: op
+  simc.game.sudo:
+    description: Allows using si-game sudo commands.
     default: op

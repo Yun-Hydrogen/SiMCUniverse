@@ -1,0 +1,32 @@
+# ================================
+# SiMCUniverse - Game 模块主配置
+# ================================
+# 说明：
+# 1) 本文件用于设置 Game 模块提示消息。
+# 2) 各玩法配置在 game/<functionID>/ 目录中。
+
+messages:
+  module-disabled: "&cGame 模块已禁用。"
+  unknown-function: "&c未知玩法: %function_id%"
+  unknown-game: "&c未知游戏ID: %game_id%"
+  already-running: "&e该游戏已在运行: %game_id%"
+  not-running: "&c该游戏未在运行: %game_id%"
+  reload-success: "&aGame 配置已重载。"
+  start-success: "&a已启动游戏 %game_name% (&f%game_id%&a)"
+  stop-success: "&e已中止游戏 %game_id%"
+  force-victory-success: "&a已强制胜利: %game_id%"
+  force-defeat-success: "&e已强制失败: %game_id%"
+  list-title: "&6[%function_id%] 可用游戏列表:"
+  list-line: "&7- &f%game_id% &8| &e%game_name%"
+
+  victory-broadcast: "&a据点防御挑战成功：%game_name%"
+  defeat-broadcast: "&c据点防御挑战失败：%game_name%"
+
+  # BossBar 标题占位符：
+  # %game_name% %time_left% %bars_left% %hp_left% %hp_total%
+  # 说明：BossBar 进度条显示“当前这管血”的剩余进度；每掉一整管会切换到下一管并变色。
+  bossbar-title: "&6%game_name% &7| &f剩余时间: &e%time_left%s &7| &f%hp_left%&7/&f%hp_total% %bars_left%"
+
+  no-last-ranking: "&7该玩法还没有最近一次结算记录。"
+  ranking-title: "&6=== basedefend 最近一次伤害排行 ==="
+  ranking-line: "&e%rank%. &f%player% &7- &c%damage%"

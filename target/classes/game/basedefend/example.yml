@@ -1,0 +1,77 @@
+# ================================
+# SiMCUniverse - Game/basedefend 示例配置
+# ================================
+# 玩法: 据点防御（basedefend）
+# 目标: 在限定时间内，全体玩家累计造成足够伤害。
+
+# 游戏唯一ID（在所有 game 功能配置中唯一）
+id: basedefend_demo
+
+# 外显游戏名
+name: "&c赤夜据点防御"
+
+# 据点中心坐标
+center:
+  world: world
+  x: 0
+  y: 64
+  z: 0
+
+# 据点半径（球形区域）
+radius: 30
+
+# 全体玩家累计总伤害目标
+required-total-damage: 50000
+
+# 血条重叠总管数（正整数）
+hp-bars: 50
+
+# 时间限制（秒）
+time-limit-seconds: 300
+
+# 会被增强生成并计入挑战的怪物（名字空间ID）
+# 支持 NBT：minecraft:zombie{CustomName:'{"text":"狂暴僵尸"}',Health:40.0f}
+counted-mobs:
+  - minecraft:zombie
+  - minecraft:skeleton
+  - minecraft:creeper
+  - minecraft:zombie{Health:40.0f,CustomName:'{"text":"狂暴僵尸"}'}
+
+# 每波刷怪个数（固定数量）
+spawn-count-per-wave: 18
+
+# 波次间隔（秒）
+spawn-wave-interval-seconds: 1
+
+# 边界粒子显示（用于可视化据点范围）
+boundary-particle:
+  enabled: true
+  # 粒子刷新间隔（tick）
+  interval-ticks: 10
+  # 每层圆环粒子点数（越高越明显）
+  points: 64
+
+# 循环音效设置（可填原版或资源包音效ID）
+sounds:
+  # 进行时循环音效，留空表示不播放
+  running: ""
+  # 成功后的循环音效
+  victory: "minecraft:ui.toast.challenge_complete"
+  # 失败后的循环音效
+  defeat: "minecraft:entity.wither.death"
+  # 循环间隔（tick）
+  interval-ticks: 40
+  # 音量与音高
+  volume: 1.0
+  pitch: 1.0
+  # 成功/失败时循环次数
+  finish-loops: 3
+
+# 挑战成功触发命令（控制台执行，无需/）
+on-victory:
+  - "tellraw @a {\"text\":\"据点防御胜利！\",\"color\":\"green\"}"
+  - "give @a minecraft:emerald 3"
+
+# 挑战失败触发命令（控制台执行，无需/）
+on-defeat:
+  - "tellraw @a {\"text\":\"据点防御失败！\",\"color\":\"red\"}"

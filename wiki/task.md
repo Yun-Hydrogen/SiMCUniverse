@@ -49,19 +49,23 @@ weekly-reset-time: "MONDAY:04:00:00"
 ```yaml
 # 示例：日常任务 - 获得经验
 category: daily
-name: "&b知识的力量"
+name: "&b经验收集者"
 description:
-  - "&7获得240经验值"
-  - "#5EFFE2奖励120青辉石"
+  - "&7获得指定经验值"
+  - "&7实时统计，完成自动确认"
 id: daily_gain_xp
 icon: "minecraft:experience_bottle"
 type: GAIN_XP
 
+# 进度提示频率：every(进度每次更新时都在bossbar显示) | percent-10(每完成10%的进度显示一次) | percent-20(每完成20%的进度显示一次) | never(从不显示进度)
+progress-notify: percent-10
+
 # GAIN_XP 的 required 为数值
-required: 240
+required: 120
 
 rewards:
-  - "si-killscore sudo add %player% 120"
+  - "tellraw %player% {\"text\":\"任务完成：经验收集者\",\"color\":\"blue\"}"
+  - "give %player% minecraft:lapis_lazuli 16"
 ```
 **daily_break_mine.yml**
 ```yaml
@@ -120,6 +124,9 @@ required:
 # 正整数：忽略 required 中各项数量，改为统计 required 中目标操作总和达到该值即完成
 total-required: 64
 
+# 进度提示频率：every(进度每次更新时都在bossbar显示) | percent-10(每完成10%的进度显示一次) | percent-20(每完成20%的进度显示一次) | never(从不显示进度)
+progress-notify: percent-10
+
 # rewards：奖励命令（无需 /），支持 %player% 占位符
 rewards:
   - "si-killscore sudo add %player% 600"
@@ -165,6 +172,10 @@ required:
 # false：按 required 中每一项各自数量完成（分别计数）
 # 正整数：忽略 required 中每一项的单独需求数量，改为统计这些目标操作总和达到该值即完成
 total-required: 20
+
+# 进度提示频率：every(进度每次更新时都在bossbar显示) | percent-10(每完成10%的进度显示一次) | percent-20(每完成20%的进度显示一次) | never(从不显示进度)
+progress-notify: percent-10
+
 
 rewards:
   - "si-killscore sudo add %player% 120"
@@ -224,7 +235,53 @@ type: POSITION
 # POSITION 的 required 可写为坐标+半径字符串：(x,y,z,radius)
 required: "(2195,72,2808,20)"
 
+# 进度提示频率：every(进度每次更新时都在bossbar显示) | percent-10(每完成10%的进度显示一次) | percent-20(每完成20%的进度显示一次) | never(从不显示进度)
+progress-notify: percent-10
+
+
 rewards:
   - "si-killscore sudo add %player% 120"
+```
+**achievement_kill_mob_6600.yml**
+```yaml
+# 示例：成就任务 - 击杀实体
+category: achievement
+name: '&2 人在基地在'
+description:
+- '&7击杀6600个怪物，完成后可获得单种类无限弹药盒'
+- '#5EFFE2单种类无限弹药盒'
+id: achievement_kill_mob_6600
+icon: minecraft:shield
+type: KILL
+
+required:
+  # 主世界
+  minecraft:zombie: 1
+  minecraft:zombie_villager: 1
+  minecraft:husk: 1
+  minecraft:skeleton: 1
+  minecraft:creeper: 1
+  minecraft:spider: 1
+  minecraft:drowned: 1
+  minecraft:enderman: 1
+  minecraft:cave_spider: 1
+  # 末地
+  minecraft:shulker: 1
+  minecraft_ender_dragon: 1
+  # 下界
+  minecraft:blaze: 1
+  minecraft:piglin: 1
+  minecraft:piglin_brute: 1
+  minecraft:witcher_skeleton: 1
+  minecraft:witch: 1
+
+# total-required：总数量模式（仅 BREAK/PLACE/INTERACT/KILL/PICKUP/CRAFT 生效）
+# false：按 required 中每一项各自数量完成（分别计数）
+# 正整数：忽略 required 中每一项的单独需求数量，改为统计这些目标操作总和达到该值即完成
+total-required: 6600
+
+rewards:
+- give %player% tacz:ammo_box{Creative:1b} 1
+progress-notify: percent-10
 ```
 更多示例任务会在插件首次加载后释放到任务配置文件夹中。

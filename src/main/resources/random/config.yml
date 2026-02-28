@@ -39,4 +39,4 @@ messages:
   reset-success: "&a已重置所有玩家保底点数。"
   set-success: "&a已设置 %player% 的保底点数为 &e%point%"
   pity-not-enough: "&c保底点数不足。"
-  pity-redeem-success: "&d保底兑换成功，点数已清零。"
+  pity-redeem-success: "&d保底兑换成功，已扣除一档保底点数。"

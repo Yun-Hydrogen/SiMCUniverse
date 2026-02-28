@@ -387,9 +387,15 @@ public class RandomModule {
             return;
         }
 
+        int point = getPityPoint(player.getUniqueId());
+        if (point < pityThreshold) {
+            player.sendMessage(msg("pity-not-enough"));
+            return;
+        }
+
         RewardItem reward = list.get(slot);
         giveReward(player, reward);
-        setPityPoint(player.getUniqueId(), 0);
+        setPityPoint(player.getUniqueId(), Math.max(0, point - pityThreshold));
         player.sendMessage(msg("pity-redeem-success"));
         player.closeInventory();
     }
@@ -720,7 +726,7 @@ public class RandomModule {
         messages.put("reset-success", config.getString("messages.reset-success", "&a已重置所有玩家保底点数。"));
         messages.put("set-success", config.getString("messages.set-success", "&a已设置 %player% 的保底点数为 &e%point%"));
         messages.put("pity-not-enough", config.getString("messages.pity-not-enough", "&c保底点数不足。"));
-        messages.put("pity-redeem-success", config.getString("messages.pity-redeem-success", "&d保底兑换成功，点数已清零。"));
+        messages.put("pity-redeem-success", config.getString("messages.pity-redeem-success", "&d保底兑换成功，已扣除一档保底点数。"));
     }
 
     private void loadPity() {

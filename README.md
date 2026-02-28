@@ -11,7 +11,7 @@
 
 ## ✨ 设计简介
 
-- 🧩 **模块化架构**：`killscore / livescore / shop / random / checkin / task / protection / quickenhance ...` 各种模块各自独立。
+- 🧩 **模块化架构**：`killscore / livescore / shop / random / checkin / task / protection / quickenhance / game ...` 各种模块各自独立。
 - 🛠️ **统一运维入口**：`/simcuniverse sudo ...` 一站式查看、启停、重载。
 - 📁 **配置驱动**：每个模块都有自己的配置目录，支持热重载。
 
@@ -90,6 +90,13 @@
 - ♻️ 支持按北京时间定时重置
 
 ![task-1.png](wiki/img/task-1.png)
+
+## [🎮 game - 游戏玩法模块](/wiki/game.md)
+
+用于承载“可拓展玩法功能（function）”的统一模块框架。当前已实现首个玩法：`basedefend`（据点防御）。
+
+- 🧱 支持按玩法目录动态加载配置（当前：`game/basedefend/*.yml`）
+- 🏟️ 据点防御：以中心坐标+半径定义据点范围，限时累计全体伤害
 
 ## [🛡️ protection - 保护模块](/wiki/protection.md)
 
